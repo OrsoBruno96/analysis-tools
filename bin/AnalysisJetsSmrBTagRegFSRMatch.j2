@@ -83,6 +83,7 @@ const array<Float_t, 3> eta_cut{ {2.2, 2.2, 2.2} };
 const Float_t lepton_in_jet_pt_cut = 12;
 const bool debug = false;
 const bool corrections_after = true;
+const bool do_reranking = false;
 
 const CorrectionLevel correction_level = CorrectionLevel::{{ cl }};
 const bool apply_trigger_cut = {{ trig }};
@@ -340,10 +341,14 @@ DataContainer::DataContainer() : resolution("tables/Fall17_25nsV1_MC_PtResolutio
 
 
 void DataContainer::sort_by_Pt() {
-  std::sort(corrected_jet.begin(), corrected_jet.end(), \
-            [](const TLorentzVector&a, const TLorentzVector& b) {
-              return a.Pt() > b.Pt();
-            });
+  if (do_reranking) {
+    std::sort(corrected_jet.begin(), corrected_jet.end(),               \
+              [](const TLorentzVector&a, const TLorentzVector& b) {
+                return a.Pt() > b.Pt();
+              });
+  } else {
+    return;
+  }
 }
 
 /**
