@@ -1,5 +1,5 @@
-.DEFAULT_TARGET=all
-.PHONY=all run_all run test
+.DEFAULT_GOAL=all
+.PHONY=all run_mc run_bkg run_sig merge_sig merge_bkg test
 
 
 BuildFile.xml: BuildFile.j2 script/create_buildfile.py
@@ -17,7 +17,7 @@ test: BuildFile.xml AnalysisJetsSmrBTagRegFSRMatch.j2
 all: _tmp/src/%.cc
 	scram b -k -j5
 
-run_all:
+run_mc:
 	./script/run_all.py mc
 
 run_bkg:
