@@ -2,7 +2,7 @@
 .PHONY=all run_mc run_bkg run_sig merge_sig merge_bkg test
 
 
-BuildFile.xml: BuildFile.j2 script/create_buildfile.py
+BuildFile.xml: BuildFile.j2 script/create_buildfile.py script/settings_parallelization.py
 	./script/create_buildfile.py
 
 _tmp/src/%.cc: AnalysisJetsSmrBTagRegFSRMatch.j2 BuildFile.xml
