@@ -5,6 +5,36 @@
  */
 
 
+/*
+ * DOCS: Here I copy an example input file that you can use as input.json
+
+
+
+{
+    "histograms": [
+        {
+            "file_name": "/afs/desy.de/user/z/zorattif/dust/output/raw_files/MC/no_reranking/medium_wp/350_nothing_true.root",
+            "name": "mass_histo_chromo_0_match;2",
+            "legend": "No correction",
+            "color": [255, 0, 0]
+        },
+        {
+            "file_name": "/afs/desy.de/user/z/zorattif/dust/output/raw_files/MC/no_reranking/medium_wp/350_only_smearing_true.root",
+            "name": "mass_histo_chromo_0_match;2",
+            "legend": "Smearing",
+            "color": [0, 0, 0]
+        }
+    ],
+    "title": "Invariant mass of bb jets",
+    "x_axis": "m_{12} [GeV]",
+    "y_axis": "Events / 20 GeV"
+}
+
+
+ */
+
+
+
 
 #include <string>
 #include <iostream>
@@ -99,13 +129,13 @@ int main(int argc, char* argv[]) {
   style.SetStyle();
   gStyle->SetOptStat(0);
   setTDRStyle();
-  TCanvas* c1 = style.MakeCanvas("c1", "", 700, 700);
+  TCanvas* c1 = style.MakeCanvas("c1", "", 800, 800);
   TLegend leg(0.58, 0.63, 0.98, 0.93);
   
   ptree root;
   read_json(config_file, root);
 
-  TColor colors[2];
+  TColor* colors[2];
   TH1F* histos[2];
   TFile* files[2];
   unsigned int i = 0;
@@ -115,7 +145,7 @@ int main(int argc, char* argv[]) {
     for (auto & colore : json.get_child("color")) {
       rgb.push_back(colore.second.get_value<int>());
     }
-    colors[i] = TColor(TColor::GetFreeColorIndex(), rgb[0], rgb[1], rgb[2]);
+    colors[i] = new TColor(TColor::GetFreeColorIndex(), rgb[0], rgb[1], rgb[2]);
     files[i] = new TFile(json.get<string>("file_name").c_str(), "read");
     if (files[i]->IsZombie()) {
       throw std::runtime_error("Error opening file " + json.get<string>("file_name"));
@@ -127,7 +157,8 @@ int main(int argc, char* argv[]) {
                                 json.get<string>("name") + " in file " + \
                                 json.get<string>("file_name")).c_str());
     }
-    histos[i]->SetFillColor(colors[i].GetNumber());
+    style.InitHist(histos[i], root.get<string>("x_axis").c_str(),
+                   root.get<string>("y_axis").c_str(), colors[i]->GetNumber(), 0);
     histos[i]->SetTitle(root.get<string>("title").c_str());
     leg.AddEntry(histos[i], json.get<string>("legend").c_str(), "pf");
     i++;
@@ -163,5 +194,7 @@ int main(int argc, char* argv[]) {
   delete histos[1];
   delete files[0];
   delete files[1];
+  delete colors[0];
+  delete colors[1];
   return 0;
 }
