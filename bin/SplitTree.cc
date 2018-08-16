@@ -2,8 +2,12 @@
 
 
 #include <array>
+#include <vector>
 #include <string>
 #include <iostream>
+
+#include <boost/program_options.hpp>
+
 
 #include "TFile.h"
 #include "TChain.h"
@@ -12,7 +16,6 @@
 #include "TMath.h"
 
 
-const int prescale = 11;
 const UInt_t kLen = 100;
 
 UInt_t run_;
@@ -122,24 +125,58 @@ int SetTreeBranches(TTree * t) {
 }
 
 
-
+namespace bpo = boost::program_options;
 
 
 int main(int argc, char* argv[]) {
-  using std::cout; using std::endl;
-  using std::array; using std::string;
+  using std::cout; using std::endl; using std::cerr;
+  using std::array; using std::string; using std::vector;
   TRandom3 randomone(20180813);
 
-  array<TFile*, prescale> out_files;
-  array<TTree*, prescale> out_trees;
+  bpo::options_description cmdline_options("Command line options");
+  cmdline_options.add_options()
+    ("help,h", "Produce help messag")
+    ("output,o", bpo::value<string>(), "Set output directory")
+    ("correction,c", bpo::value<string>(), "Set type of correction level to process")
+    ("input,i", bpo::value<string>(), "Set input directory")
+    ("prescale,p", bpo::value<Int_t>(), "Set prescale")
+    ;
+  bpo::variables_map vm;
+  bpo::store(bpo::parse_command_line(argc, argv, cmdline_options), vm);
+  if (vm.count("help")) {
+    cout << cmdline_options << endl;
+  }
+  if (vm.count("input") != 1) {
+    cerr << "Please specify input directory" << endl;
+    return -1;
+  }
+  if (vm.count("output") != 1) {
+    cerr << "Please specify output directory" << endl;
+    return -2;
+  }
+  if (vm.count("prescale") != 1) {
+    cerr << "Please specify prescale" << endl;
+  }
+  if (vm.count("correction") != 1) {
+    cerr << "Please specify correction" << endl;
+  }
+
+  Int_t prescale = vm["prescale"].as<Int_t>();
+  string input_dir = vm["input"].as<string>();
+  string output_dir = vm["output"].as<string>();
+  string correction = vm["correction"].as<string>();
+  
+  vector<TFile*> out_files(prescale);
+  vector<TTree*> out_trees(prescale);
   TChain old_tree("output_tree");
   
-  string correction = argv[1];
-  old_tree.Add((string("output/hists/bkg/fourth/bkg_*_") + correction + string(".root")).c_str());
+  old_tree.Add((input_dir + string("/bkg_*_") + correction + string(".root")).c_str());
   SetTreeBranches(&old_tree);
   int counter = 0;
   for (Int_t i = 0; i < prescale; i++) {
-    out_files[i] = new TFile((string("output/split/bkg/") + correction + string("_") + std::to_string(counter) + string(".root")).c_str(), "recreate");
+    out_files[i] = new TFile((output_dir + string("/") + correction + \
+                              string("_") + std::to_string(counter) + \
+                              string(".root")).c_str(), "recreate");
     out_trees[i] = old_tree.CloneTree(0);
     counter++;
   }
