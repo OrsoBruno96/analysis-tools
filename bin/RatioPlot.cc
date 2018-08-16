@@ -92,8 +92,6 @@ int main(int argc, char* argv[]) {
   }
   
 
-  // AGGIUNGERE OPZIONE PER MC O MENO
-  
   string config_file(vm["input"].as<string>());
   string output_file(vm["output"].as<string>());
   // Setting style
