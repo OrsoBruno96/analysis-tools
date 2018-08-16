@@ -52,11 +52,12 @@ using std::cerr;
 using std::vector;
 
 {% if data %}
-enum class CorrectionLevel { nothing, regression, regression_fsr };
+enum class CorrectionLevel { nothing, regression, fsr, regression_fsr };
 
 {% else %}
 enum class CorrectionLevel { nothing, only_smearing, smearing_btag,     \
-                             smearing_btag_regression, smearing_btag_regression_fsr };
+                             smearing_btag_regression, smearing_btag_fsr, \
+                             smearing_btag_regression_fsr };
 {% endif %}
 namespace Smearing {
   enum class method {scaling, stochastic};
@@ -559,6 +560,10 @@ void DataContainer::apply_all_corrections(CorrectionLevel lev) {
     }
     sort_by_Pt();
     break;
+  case CorrectionLevel::fsr:
+    apply_fsr_correction();
+    sort_by_Pt();
+    break;
   case CorrectionLevel::regression_fsr:
     for (unsigned int i = 0; i < njet_; i++) {
       apply_jet_reg_sf(i);
@@ -592,6 +597,17 @@ void DataContainer::apply_all_corrections(CorrectionLevel lev) {
     for (unsigned int i = 0; i < njet_; i++) {
       apply_jet_reg_sf(i);
     }
+    sort_by_Pt();
+    break;
+
+  case CorrectionLevel::smearing_btag_fsr:
+        for (unsigned int i = 0; i < njet_; i++) {
+      smear_current_data(i);
+    }
+    sort_by_Pt();
+    apply_btag_sf();
+    sort_by_Pt();
+    apply_fsr_correction();
     sort_by_Pt();
     break;
   case CorrectionLevel::smearing_btag_regression_fsr:

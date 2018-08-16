@@ -2,19 +2,30 @@
 
 from os import listdir
 
-correction_level_signal = [("nothing", "false"),
-                    ("only_smearing", "false"),
-                    ("smearing_btag", "false"),
-                    ("smearing_btag_regression", "false"),
-                    ("smearing_btag_regression_fsr", "false"),
-                    ("smearing_btag_regression_fsr", "true")
+correction_level_signal = [
+     ("nothing", "false"),
+     ("only_smearing", "false"),
+     ("smearing_btag", "false"),
+     ("smearing_btag_regression", "false"),
+     ("smearing_btag_fsr", "false"),
+     ("smearing_btag_regression_fsr", "false"),
+     ("nothing", "true"),
+     ("only_smearing", "true"),
+     ("smearing_btag", "true"),
+     ("smearing_btag_regression", "true"),
+     ("smearing_btag_fsr", "true"),
+     ("smearing_btag_regression_fsr", "true"),
 ]
 
 correction_level_bkg = [
-    ("nothing", "false"),
-    ("regression", "false"),
-    ("regression_fsr", "false"),
-    ("regression_fsr", "true")
+     ("nothing", "false"),
+     ("regression", "false"),
+     ("fsr", "false"),
+     ("regression_fsr", "false"),
+     ("nothing", "true"),
+     ("regression", "true"),
+     ("fsr", "true"),
+     ("regression_fsr", "true"),
 ]
 
 mass_points_signal = [{'mass': "120",
