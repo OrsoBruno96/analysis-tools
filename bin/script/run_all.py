@@ -33,7 +33,7 @@ def condor_submit(executable, args, name, runtime=1800, memory=1000):
         {'filename': filename, 'runtime': str(runtime),
          'memory': str(memory)})
 
-
+base_out_dir = "/nfs/dust/cms/user/zorattif/output/"
 
 SPLITTING = 7
     
@@ -72,24 +72,27 @@ def fill_list(type_of, output_dir):
     
     
 if sys.argv[1] == "bkg" and len(sys.argv) == 2:
-    output_dir = "output/hists/bkg/fourth"
+    output_dir = os.path.join(base_out_dir, "raw_files/bkg/no_reranking/tight_wp")
     proc = Popen([fill_list("bkg", output_dir), ], stdout=PIPE)
+    print(proc.stdout.read())
     proc.wait()
 elif sys.argv[1] == "bkg" and sys.argv[2] is not None and sys.argv[2] == "merge":
-    output_dir = "output/hists/bkg/fourth"
+    output_dir = os.path.join(base_out_dir, "raw_files/bkg/no_reranking/tight_wp")
     for params in bkg_files:
         for cl in correction_level_bkg:
             output_file = "_".join([params['mass'], params['era'], cl[0], cl[1]])
             output_file = os.path.join(output_dir, output_file)
+            print(output_file)
             to_merge = list()
             for lista, i in zip(split_list(params['filenames'], SPLITTING), range(0, 10000)):
                 to_merge.append("_".join([output_file, params["era"], str(i)]) + ".root")
-            process = Popen(["hadd", "-f", output_file + ".root"] + to_merge, stdout=PIPE)
-            process.wait()
+            proc = Popen(["hadd", "-f", output_file + ".root"] + to_merge, stdout=PIPE)
+            print(proc.stdout.read())
+            proc.wait()
             # Here we do rm if all is ok
             
 elif sys.argv[1] == "mc":
-    output_dir = "output/hists/jets/last"
+    output_dir = os.path.join(base_out_dir, "raw_files/MC/no_reranking/tight_wp")
     for params in mass_points_signal:
         for cl in correction_level_signal:
             executable = "_".join(["mc", cl[0], cl[1]])
@@ -105,17 +108,20 @@ elif sys.argv[1] == "mc":
     for p in process_list:
         bash_file.write(" ".join([condor_script_executable,
                                   p['filename'], p['runtime'], p['memory']]) + "\n")
+    bash_file.close()
     os.chmod(bash_filename, 0755)
     proc = Popen([bash_filename, ], stdout=PIPE)
+    print(proc.stdout.read())
     proc.wait()
 
 elif sys.argv[1] == 'sig' and len(sys.argv) == 2:
-    output_dir = "output/hists/sig/first"
+    output_dir = os.path.join(base_out_dir, "raw_files/signal/no_reranking/tight_wp")
     proc = Popen([fill_list("sig", output_dir), ], stdout=PIPE)
+    print(proc.stdout.read())
     proc.wait()
     
 elif sys.argv[1] == "sig" and len(sys.argv) == 3 and sys.argv[2] == "merge":
-    output_dir = "output/hists/sig/first"
+    output_dir = os.path.join(base_out_dir, "raw_files/signal/no_reranking/tight_wp")
     for params in bkg_files:
         for cl in correction_level_bkg:
             output_file = "_".join(["sig", params['era'], cl[0], cl[1]])
@@ -123,5 +129,6 @@ elif sys.argv[1] == "sig" and len(sys.argv) == 3 and sys.argv[2] == "merge":
             to_merge = list()
             for lista, i in zip(split_list(params['filenames'], SPLITTING), range(0, 10000)):
                 to_merge.append("_".join([output_file, params["era"], str(i)]) + ".root")
-            process = Popen(["hadd", "-f", output_file + ".root"] + to_merge, stdout=PIPE)
-            process.wait()
+            proc = Popen(["hadd", "-f", output_file + ".root"] + to_merge, stdout=PIPE)
+            print(proc.stdout.read())
+            proc.wait()
