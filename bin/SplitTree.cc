@@ -12,7 +12,7 @@
 #include "TMath.h"
 
 
-const int prescale = 7;
+const int prescale = 11;
 const UInt_t kLen = 100;
 
 UInt_t run_;
@@ -133,7 +133,8 @@ int main(int argc, char* argv[]) {
   array<TFile*, prescale> out_files;
   array<TTree*, prescale> out_trees;
   TChain old_tree("output_tree");
-  string correction = "nothing_false";
+  
+  string correction = argv[1];
   old_tree.Add((string("output/hists/bkg/fourth/bkg_*_") + correction + string(".root")).c_str());
   SetTreeBranches(&old_tree);
   int counter = 0;
