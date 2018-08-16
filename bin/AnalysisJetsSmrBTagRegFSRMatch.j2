@@ -996,37 +996,39 @@ void DataContainer::fill_histogram(TTree* tree, \
            << endl;
     }
     {% endif %}
+
+    {% if blind %}
+    mass_ = 100;  // In this way the m12 spectrum is blinded.
+    {% endif %}
     
-    {% if not blind %}
     out_tree->Fill();
     {% if data %}
     if (!leptonic) {
       plots[0]->Fill(mass_, weigth);
       plots[2]->Fill(bjets[0].Pt(), weigth);
-      plots[4]->Fill(jet_b_reg_res_[bjets[0].Idx()], weigth);
+      plots[3]->Fill(bjets[1].Pt(), weigth);
+      plots[4]->Fill(bjets[2].Pt(), weigth);
+      plots[8]->Fill(jet_b_reg_res_[bjets[0].Idx()], weigth);
     } else {
       plots[1]->Fill(mass_, weigth);
-      plots[3]->Fill(bjets[0].Pt(), weigth);
-      plots[5]->Fill(jet_b_reg_res_[bjets[0].Idx()], weigth);
+      plots[5]->Fill(bjets[0].Pt(), weigth);
+      plots[6]->Fill(bjets[1].Pt(), weigth);
+      plots[7]->Fill(bjets[2].Pt(), weigth);
+      plots[9]->Fill(jet_b_reg_res_[bjets[0].Idx()], weigth);
     }
     {% else %}
-    if (leptonic) {
-      plots[matched + 3]->Fill(mass_, weigth);
-      plots[7]->Fill(bjets[0].Pt(), weigth);
-      plots[9]->Fill(jet_b_reg_res_[bjets[0].Idx()], weigth);
-    } else {
+    if (!leptonic) {
       plots[matched]->Fill(mass_, weigth);
       plots[6]->Fill(bjets[0].Pt(), weigth);
-      plots[8]->Fill(jet_b_reg_res_[bjets[0].Idx()], weigth);
-    }
-    {% endif %}
-    {% else %}
-    mass_ = 100;  // I put the mass at a fixed value to blind myself
-    out_tree->Fill();
-    if (leptonic) {
-      plots[1]->Fill(100, 1);
+      plots[7]->Fill(bjets[1].Pt(), weigth);
+      plots[8]->Fill(bjets[2].Pt(), weigth);
+      plots[12]->Fill(jet_b_reg_res_[bjets[0].Idx()], weigth);
     } else {
-      plots[0]->Fill(150, 1);
+      plots[matched + 3]->Fill(mass_, weigth);
+      plots[9]->Fill(bjets[0].Pt(), weigth);
+      plots[10]->Fill(bjets[1].Pt(), weigth);
+      plots[11]->Fill(bjets[2].Pt(), weigth);
+      plots[13]->Fill(jet_b_reg_res_[bjets[0].Idx()], weigth);
     }
     {% endif %}
   }
@@ -1296,16 +1298,29 @@ int main(int argc, char* argv[]) {
   histos.push_back(&mass_histo_lepton_1_match);
   histos.push_back(&mass_histo_lepton_2_match);
   {% endif %}
-  TH1F pt_spectrum_chromo("pt_spectrum_chromo",                         \
-                          "Pt spectrum for chromo events", bins, 0, highx);
-  TH1F pt_spectrum_lepton("pt_spectrum_lepton", \
-                          "Pt spectrum for lepton events", bins, 0, highx);
+  TH1F pt_spectrum_chromo1("pt_spectrum_chromo_1",                         \
+                          "Pt spectrum 1 for chromo events", bins, 0, highx);
+  TH1F pt_spectrum_lepton1("pt_spectrum_lepton_1", \
+                          "Pt spectrum 1 for lepton events", bins, 0, highx);
+  TH1F pt_spectrum_chromo2("pt_spectrum_chromo_2",                      \
+                          "Pt spectrum 2 for chromo events", bins, 0, highx);
+  TH1F pt_spectrum_lepton2("pt_spectrum_lepton_2", \
+                          "Pt spectrum 2 for lepton events", bins, 0, highx);
+  TH1F pt_spectrum_chromo3("pt_spectrum_chromo_3",                         \
+                          "Pt spectrum 3 for chromo events", bins, 0, highx);
+  TH1F pt_spectrum_lepton3("pt_spectrum_lepton_3", \
+                          "Pt spectrum 3 for lepton events", bins, 0, highx);
+
   TH1F reg_res_chromo("reg_res_chromo", "RegRes for non lepton events", \
                       bins, 0, 1);
   TH1F reg_res_lepton("reg_res_lepton", "RegRes for lepton events",     \
                       bins, 0, 1);
-  histos.push_back(&pt_spectrum_chromo);
-  histos.push_back(&pt_spectrum_lepton);
+  histos.push_back(&pt_spectrum_chromo1);
+  histos.push_back(&pt_spectrum_chromo2);
+  histos.push_back(&pt_spectrum_chromo3);
+  histos.push_back(&pt_spectrum_lepton1);
+  histos.push_back(&pt_spectrum_lepton2);
+  histos.push_back(&pt_spectrum_lepton3);
   histos.push_back(&reg_res_chromo);
   histos.push_back(&reg_res_lepton);
 
