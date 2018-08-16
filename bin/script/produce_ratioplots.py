@@ -7,7 +7,7 @@ from settings_parallelization import correction_level_bkg, correction_level_sign
 from ROOT import TFile, TChain, TH1F
 from os.path import join as ojoin
 from os import chmod
-from subprocess import Popen, STDOUT, PIPE, call
+from subprocess import Popen, STDOUT, PIPE, call, check_call
 from decimal import Decimal, getcontext
 
 
@@ -78,14 +78,23 @@ def get_filter_string(lep):
 
     
 def get_legend(corr_level):
-    if "false" in corr_level:
+    if "true" in corr_level:
         appo = ""
     else:
         appo = "(NT)"
     if "nothing" in corr_level:
         appo2 = "Nothing"
-    elif True:
-        appo2 = "Implementami, cazzo"
+    else:
+        appo2 = list()
+        if "smearing" in corr_level:
+            appo2.append("SMR")
+        if "regression" in corr_level:
+            appo2.append("REG")
+        if "btag" in corr_level:
+            appo2.append("BTAG")
+        if "fsr" in corr_level:
+            appo2.append("FSR")
+        appo2 = " ".join(appo2)
     return " ".join([appo2, appo])
 
 
@@ -150,11 +159,10 @@ templated_file.write(out_text)
 
 command = ["RatioPlot", "--input", templated_filename, "--output", output_name,
            "--min-ratio", str(fix_min_ratio), "--max-ratio", str(fix_max_ratio)]
+# proc = Popen(command, stdout=PIPE, stderr=PIPE)
 print(" ".join(command))
 out_bash_filename = "../_tmp/script/run_ratioplot.sh"
 out_bash_file = open(out_bash_filename, "w")
 out_bash_file.write(" ".join(command))
 out_bash_file.close()
 chmod(out_bash_filename, 0755)
-proc = Popen(["bash", out_bash_filename, ], stdout=PIPE)
-print(proc.stdout.read())
