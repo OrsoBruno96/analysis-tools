@@ -8,7 +8,11 @@
 {% endfor %}
 
 
-{% for d in directories %}
-  cd {{ d }}
-  PlotLimit -i HbbLimits -M sigmaBR
+{% for l in lep %}
+{% for c in corrections %}
+cd {{ out_dir }}/{{ l }}/{{ c }}
+PlotLimit -i HbbLimits -M sigmaBR
+cp HbbLimits.pdf {{ out_dir }}/{{ l }}/{{ c }}.pdf
+cp HbbLimits.png {{ out_dir }}/{{ l }}/{{ c }}.png
+{% endfor %}
 {% endfor %}

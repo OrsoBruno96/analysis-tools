@@ -2,6 +2,9 @@
 
 from os import listdir
 
+import os
+import errno
+
 correction_level_signal = [
      ("nothing", "false"),
      ("only_smearing", "false"),
@@ -99,3 +102,13 @@ def name_of_lep(l):
         return "lep"
     else:
         return "chr"
+
+
+def open_and_create_dir(filename):
+     if not os.path.exists(os.path.dirname(filename)):
+          try:
+               os.makedirs(os.path.dirname(filename))
+          except OSError as exc:
+               if exc.errno != errno.EEXIST:
+                    raise
+     return open(filename, "w")
