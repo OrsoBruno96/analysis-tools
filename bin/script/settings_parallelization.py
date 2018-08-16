@@ -70,8 +70,6 @@ files_eras = [
     }
 ]
 
-size = 10
-
 def split_list(arr, size):
      arrs = []
      while len(arr) > size:
@@ -94,3 +92,10 @@ bkg_files = [
     }
     for params in files_eras
 ]
+
+
+def name_of_lep(l):
+    if l:
+        return "lep"
+    else:
+        return "chr"
