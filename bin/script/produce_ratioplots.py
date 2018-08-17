@@ -12,16 +12,17 @@ from decimal import Decimal, getcontext
 
 
 # Input variables
-type_choice = "MC"
+type_choice = "bkg"
 plot_choice = 'mass'
 corr_level1 = 'nothing_true'
-corr_level2 = 'smearing_btag_fsr_true'
-output_name = 'cusumano.pdf'
-era = '350'
+corr_level2 = 'regression_true'
+era1 = ['F',]
+era2 = ['F',]
 highx = 800
-binx = 50
-fix_min_ratio = 0
+binx = 150
+fix_min_ratio = None
 fix_max_ratio = 2
+lumi = 35.6
 
 getcontext().prec = 1
 lep = True
@@ -29,6 +30,9 @@ lep = True
 
 base_directory = "/nfs/dust/cms/user/zorattif/output"
 cur_working = "no_reranking/medium_wp"
+output_name = ojoin(ojoin(base_directory, ojoin("plots", cur_working)), "_".join(
+    ["ratio", name_of_lep(lep), type_choice, plot_choice] + era1 +[corr_level1, ] + era2 + [corr_level2]) + ".pdf")
+
 
 
 # Modify after this only if you know what are doing
@@ -115,13 +119,15 @@ def get_x_axis(choice):
 input_directory = ojoin(base_directory, "raw_files")
 input_directory = ojoin(input_directory, type_choice)
 input_directory = ojoin(input_directory, cur_working)
-input_filename1 = ojoin(input_directory, get_filename(type_choice, corr_level1, era))
-input_filename2 = ojoin(input_directory, get_filename(type_choice, corr_level2, era))
-
 tree1 = TChain("output_tree")
 tree2 = TChain("output_tree")
-tree1.Add(input_filename1)
-tree2.Add(input_filename2)
+
+for e in era1:
+    input_filename1 = ojoin(input_directory, get_filename(type_choice, corr_level1, e))
+    tree1.Add(input_filename1)
+for e in era2:
+    input_filename2 = ojoin(input_directory, get_filename(type_choice, corr_level2, e))
+    tree2.Add(input_filename2)
 
 tmp_histo_file = TFile(tmp_filename, "recreate")
 histo1 = TH1F("tmp1", possibilities[plot_choice]['title'], binx, 0, highx)
@@ -155,10 +161,13 @@ out_text = template.render(
 templated_file = open_and_create_dir(templated_filename)
 templated_file.write(out_text)
 
-
-
-command = ["RatioPlot", "--input", templated_filename, "--output", output_name,
-           "--min-ratio", str(fix_min_ratio), "--max-ratio", str(fix_max_ratio)]
+command = ["RatioPlot", "--input", templated_filename, "--output", output_name]
+if fix_min_ratio is not None:
+    command += ["--min-ratio", str(fix_min_ratio)]
+if fix_max_ratio is not None:
+    command += ["--max-ratio", str(fix_max_ratio)]
+if lumi is not None:
+    command += ["--lumi", str(lumi)]
 # proc = Popen(command, stdout=PIPE, stderr=PIPE)
 print(" ".join(command))
 out_bash_filename = "../_tmp/script/run_ratioplot.sh"
