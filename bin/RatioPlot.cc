@@ -60,6 +60,7 @@
 #include "TColor.h"
 #include "TROOT.h"
 #include "TRatioPlot.h"
+#include "TGaxis.h"
 
 #include "tdrstyle.C"
 #include "HbbStylesNew.cc"
@@ -166,6 +167,9 @@ int main(int argc, char* argv[]) {
   TRatioPlot ratio(histos[0], histos[1]);
   ratio.GetXaxis()->SetTitle(root.get<string>("x_axis").c_str());
   ratio.GetUpYaxis()->SetTitle(root.get<string>("y_axis").c_str());
+  TGaxis::SetMaxDigits(3);
+  ratio.GetLowYaxis()->SetNdivisions(606);
+  ratio.GetUpperPad()->SetLeftMargin(0.14);
   style.SetLegendStyle(&leg);
   ratio.Draw();
   string appo;
