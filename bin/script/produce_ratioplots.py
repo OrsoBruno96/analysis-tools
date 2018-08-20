@@ -23,6 +23,8 @@ binx = 150
 fix_min_ratio = None
 fix_max_ratio = 2
 lumi = 35.6
+extra_filter1 = None
+extra_filter2 = None
 
 getcontext().prec = 1
 lep = True
@@ -113,7 +115,14 @@ def get_x_axis(choice):
         return "p_T [GeV]"
     else:
         raise RuntimeError("get_x_axis called with wrong parameter")
+
     
+def join_filter_string(first, second=None):
+    if second is None:
+        return first
+    else:
+        return " && ".join([first, second])
+
 
 
 input_directory = ojoin(base_directory, "raw_files")
@@ -132,8 +141,10 @@ for e in era2:
 tmp_histo_file = TFile(tmp_filename, "recreate")
 histo1 = TH1F("tmp1", possibilities[plot_choice]['title'], binx, 0, highx)
 histo2 = TH1F("tmp2", possibilities[plot_choice]['title'], binx, 0, highx)
-tree1.Draw(possibilities[plot_choice]['tree'] + ">>tmp1", get_filter_string(lep), "")
-tree2.Draw(possibilities[plot_choice]['tree'] + ">>tmp2", get_filter_string(lep), "")
+tree1.Draw(possibilities[plot_choice]['tree'] + ">>tmp1",
+           join_filter_string(get_filter_string(lep), extra_filter1), "")
+tree2.Draw(possibilities[plot_choice]['tree'] + ">>tmp2",
+           join_filter_string(get_filter_string(lep), extra_filter2), "")
 histo1.Write()
 histo2.Write()
 tmp_histo_file.Close()
