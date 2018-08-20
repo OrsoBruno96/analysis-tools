@@ -6,6 +6,7 @@ from jinja2 import FileSystemLoader, Environment
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
     name_of_lep, open_and_create_dir
+from os.path import join as ojoin
 
 import os
 
@@ -90,10 +91,20 @@ for mass in mass_points:
             output_filename = os.path.join(out_dir, "datacards")
             output_filename = os.path.join(output_filename,
                                            "_".join([mass, output_file_name_appo, cb]) + ".txt")
-            out_text = template.render(
-                obs=bkg_events,
-                file_name=os.path.join(
-                    out_dir, "_".join(["combine", output_file_name_appo, mass, cb]) + ".root"))
+            if shape_bkg:
+                file_bkg = ojoin(ojoin(ojoin(base_directory, "fit/bkg"),
+                                       specific_directory), cb) + ".root"
+                out_text = template.render(
+                    obs=bkg_events,
+                    file_name=os.path.join(
+                        out_dir, "_".join(
+                            ["combine", output_file_name_appo, mass, cb]) + ".root"),
+                    file_fit=file_bkg)
+            else:
+                out_text = template.render(
+                    obs=bkg_events,
+                    file_name=os.path.join(
+                        out_dir, "_".join(["combine", output_file_name_appo, mass, cb]) + ".root"))
             output_file = open(output_filename, "w")
             output_file.write(out_text)
             list_of_datacards.append({'mass': mass, 'file': output_filename,

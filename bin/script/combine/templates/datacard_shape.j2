@@ -7,8 +7,8 @@ kmax *   number of nuisance parameters
 observation {{ obs }}
 -----------------
 shapes MC_bbb_Mbb * {{ file_name }} $PROCESS $PROCESS_$SYSTEMATIC
-shapes bbnb_Mbb * {{ file_name }} w:super_novosibirsk
-shapes data_obs * {{ file_name }} w:super_novosibirsk
+shapes bbnb_Mbb * {{ file_fit }} w:super_novosibirsk
+shapes data_obs * {{ file_name }} bbnb_Mbb
 -----------------
 bin                        bbHTo4b    bbHTo4b
 process                    MC_bbb_Mbb    bbnb_Mbb
