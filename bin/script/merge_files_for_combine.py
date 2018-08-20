@@ -14,18 +14,20 @@ lep = [False, True]
 eras = ["C", "D", "E", "F"]
 mass_points = ["120", "350", "1200"]
 limits = {
-    "120": (0, 1000, 40),
-    "350": (0, 1000, 120),
-    "1200": (0, 2000, 90),
+    "120": (80, 1000, 60),
+    "350": (100, 1000, 120),
+    "1200": (100, 2000, 90),
 }
 
-base_directory = "/nfs/dust/cms/user/zorattif/output"
 
-directory_bkg = os.path.join(base_directory, "raw_files/bkg/no_reranking/medium_wp")
-directory_splitted_bkg = os.path.join(base_directory, "split/bkg/no_reranking/medium_wp")
-directory_mc = os.path.join(base_directory, "raw_files/MC/no_reranking/medium_wp")
-directory_sig = os.path.join(base_directory, "raw_files/signal/no_reranking/medium_wp")
-out_dir = os.path.join(base_directory, "combine_tool/no_reranking/medium_wp")
+base_directory = "/nfs/dust/cms/user/zorattif/output"
+specific_directory = "no_reranking/medium_wp"
+
+directory_bkg = os.path.join(base_directory, os.path.join("raw_files/bkg" , specific_directory))
+directory_splitted_bkg = os.path.join(base_directory, os.path.join("split/bkg", specific_directory))
+directory_mc = os.path.join(base_directory, os.path.join("raw_files/MC", specific_directory))
+directory_sig = os.path.join(base_directory, os.path.join("raw_files/signal", specific_directory))
+out_dir = os.path.join(base_directory, os.path.join("combine_tool", specific_directory))
 output_script_filedir = "../_tmp/script"
 
 
@@ -44,6 +46,8 @@ for mass in mass_points:
             appo_bkg = TChain("output_tree")
             appo_mc = TChain("output_tree")
             appo_sig = TChain("output_tree")
+            limit_string = "(Mass > " + limit[0] + \
+                           ") && (Mass < " + limit[1] + ")"
             if l:
                 filter_string = "Leptonic_event"
                 output_file_name_appo = "lep"
@@ -61,9 +65,10 @@ for mass in mass_points:
             histo_bkg = TH1F("bbnb_Mbb", "bbnb Mbb", limit[2], limit[0], limit[1])
             histo_mc = TH1F("MC_bbb_Mbb", "bbb Mbb MC", limit[2], limit[0], limit[1])
             histo_sig = TH1F("sig_bbb_Mbb", "bbb Mbb", limit[2], limit[0], limit[1])
-            appo_bkg.Draw("Mass>>bbnb_Mbb", " && ".join([filter_string, ]), "")
-            appo_mc.Draw("Mass>>MC_bbb_Mbb", "Weigth*" + " && ".join([filter_string, ]), "")
-            appo_sig.Draw("Mass>>sig_bbb_Mbb", " && ".join([filter_string, ]), "")
+            appo_bkg.Draw("Mass>>bbnb_Mbb", " && ".join([filter_string, limit_string]), "")
+            appo_mc.Draw("Mass>>MC_bbb_Mbb", "Weigth*" + " && ".join([filter_string,
+                                                                      limit_string]), "")
+            appo_sig.Draw("Mass>>sig_bbb_Mbb", " && ".join([filter_string, limit_string]), "")
             bkg_events = histo_bkg.GetEntries()
             histo_bkg.Write()
             histo_mc.Write()
