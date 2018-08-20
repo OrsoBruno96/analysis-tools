@@ -404,8 +404,8 @@ int DataContainer::SetTreeBranches(TTree * t) {
   t->SetBranchAddress("Jet_jetId", jet_id_);
   t->SetBranchAddress("Jet_btagDeepB", btag_deep_);
   t->SetBranchAddress("Jet_bRegCorr", jet_b_reg_corr);
-  t->SetBranchAddress("Jet_nElectrons", &jet_n_electrons);
-  t->SetBranchAddress("Jet_nMuons", &jet_n_muons);
+  t->SetBranchAddress("Jet_nElectrons", jet_n_electrons);
+  t->SetBranchAddress("Jet_nMuons", jet_n_muons);
   {% if not data %}
   t->SetBranchAddress("Jet_genJetIdx", jet_genjet_idx_);
   t->SetBranchAddress("nGenJet", &n_gen_jet_);
@@ -466,8 +466,8 @@ void DataContainer::CreateTree(TTree* t) {
   t->Branch("Jet_jetId", jet_id_, "Jet_jetId[nJet]/I");
   t->Branch("Jet_btagDeepB", btag_deep_, "Jet_btagDeepB[nJet]/F");
   t->Branch("Jet_bRegCorr", jet_b_reg_corr, "Jet_bRegCorr[nJet]/F");
-  t->Branch("Jet_nElectrons", &jet_n_electrons, "Jet_nElectrons/I");
-  t->Branch("Jet_nMuons", &jet_n_muons, "Jet_nMuons/F");
+  t->Branch("Jet_nElectrons", jet_n_electrons, "Jet_nElectrons[nJet]/I");
+  t->Branch("Jet_nMuons", jet_n_muons, "Jet_nMuons[nJet]/I");
   {% if not data %}
   t->Branch("Jet_genJetIdx", jet_genjet_idx_, "Jet_genJetIdx[nJet]/I");
   t->Branch("nGenJet", &n_gen_jet_, "nGenJet/i");
@@ -833,6 +833,11 @@ void DataContainer::fill_histogram(TTree* tree, \
         continue;
         leptonic = true;  // this line is never executed
       }
+
+      if (debug) {
+        cout << "Number of muons in jet: " << jet_n_muons[it->Idx()]  << endl;
+      }
+      
       if (jet_n_muons[it->Idx()] != 0) {
         if (debug) {
           cout << "There is a muon. Checking for pt cut: " << muon_pt_[jet_muon_idx1[it->Idx()]] \
