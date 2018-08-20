@@ -177,8 +177,8 @@ if fix_min_ratio is not None:
     command += ["--min-ratio", str(fix_min_ratio)]
 if fix_max_ratio is not None:
     command += ["--max-ratio", str(fix_max_ratio)]
-if lumi is not None:
-    command += ["--lumi", str(lumi)]
+if type_choice != "MC" and lumi is not None:
+   command += ["--lumi", str(lumi)]
 # proc = Popen(command, stdout=PIPE, stderr=PIPE)
 print(" ".join(command))
 out_bash_filename = "../_tmp/script/run_ratioplot.sh"
