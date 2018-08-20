@@ -10,6 +10,10 @@ from settings_parallelization import correction_level_bkg, correction_level_sign
 import os
 
 
+shape_bkg = True
+
+
+
 lep = [False, True]
 eras = ["C", "D", "E", "F"]
 mass_points = ["120", "350", "1200"]
@@ -27,7 +31,13 @@ directory_bkg = os.path.join(base_directory, os.path.join("raw_files/bkg" , spec
 directory_splitted_bkg = os.path.join(base_directory, os.path.join("split/bkg", specific_directory))
 directory_mc = os.path.join(base_directory, os.path.join("raw_files/MC", specific_directory))
 directory_sig = os.path.join(base_directory, os.path.join("raw_files/signal", specific_directory))
-out_dir = os.path.join(base_directory, os.path.join("combine_tool", specific_directory))
+
+if shape_bkg:
+    sssspecific_dir = "shape"
+else:
+    sssspecific_dir = "template"
+out_dir = os.path.join(base_directory, os.path.join(
+    os.path.join("combine_tool", sssspecific_dir), specific_directory))
 output_script_filedir = "../_tmp/script"
 
 
@@ -35,7 +45,10 @@ output_script_filedir = "../_tmp/script"
 list_of_datacards = list()
 template_loader = FileSystemLoader(searchpath='./combine/templates/')
 template_env = Environment(loader=template_loader)
-template = template_env.get_template("datacard.j2")
+if shape_bkg:
+    template = template_env.get_template("datacard_shape.j2")
+else:
+    template = template_env.get_template("datacard.j2")
 template_script = template_env.get_template("combine_script.j2")
 
 for mass in mass_points:
@@ -46,15 +59,15 @@ for mass in mass_points:
             appo_bkg = TChain("output_tree")
             appo_mc = TChain("output_tree")
             appo_sig = TChain("output_tree")
-            limit_string = "(Mass > " + limit[0] + \
-                           ") && (Mass < " + limit[1] + ")"
+            limit = limits[mass]
+            limit_string = "(Mass > " + str(limit[0]) + \
+                           ") && (Mass < " + str(limit[1]) + ")"
             if l:
                 filter_string = "Leptonic_event"
                 output_file_name_appo = "lep"
             else:
                 filter_string = "!(Leptonic_event)"
                 output_file_name_appo = "chr"
-            limit = limits[mass]
             for e in eras:
                 appo_sig.Add(os.path.join(directory_sig, "_".join(["sig", e, cb]) + ".root"))
             appo_bkg.Add(os.path.join(directory_splitted_bkg, "_".join([cb, "2"]) + ".root"))
