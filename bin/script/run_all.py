@@ -61,7 +61,7 @@ def fill_list(type_of, output_dir):
                     executable,
                     [tmp_output_file, str(bins), str(highx)] + veralista,
                     "_".join([executable, params["era"], str(i)]), 1800, 1000)
-    bash_filename = "_tmp/run_condor.sh"
+    bash_filename = "_tmp/run_condor" + type_of + ".sh"
     bash_file = open(bash_filename, "w")
     bash_file.write("#!/bin/bash\n")
     for p in process_list:
@@ -72,12 +72,12 @@ def fill_list(type_of, output_dir):
     
     
 if sys.argv[1] == "bkg" and len(sys.argv) == 2:
-    output_dir = os.path.join(base_out_dir, "raw_files/bkg/no_reranking/tight_wp")
+    output_dir = os.path.join(base_out_dir, "raw_files/bkg/no_reranking/medium_wp")
     proc = Popen([fill_list("bkg", output_dir), ], stdout=PIPE)
     print(proc.stdout.read())
     proc.wait()
 elif sys.argv[1] == "bkg" and sys.argv[2] is not None and sys.argv[2] == "merge":
-    output_dir = os.path.join(base_out_dir, "raw_files/bkg/no_reranking/tight_wp")
+    output_dir = os.path.join(base_out_dir, "raw_files/bkg/no_reranking/medium_wp")
     for params in bkg_files:
         for cl in correction_level_bkg:
             output_file = "_".join([params['mass'], params['era'], cl[0], cl[1]])
@@ -92,7 +92,7 @@ elif sys.argv[1] == "bkg" and sys.argv[2] is not None and sys.argv[2] == "merge"
             # Here we do rm if all is ok
             
 elif sys.argv[1] == "mc":
-    output_dir = os.path.join(base_out_dir, "raw_files/MC/no_reranking/tight_wp")
+    output_dir = os.path.join(base_out_dir, "raw_files/MC/no_reranking/medium_wp")
     for params in mass_points_signal:
         for cl in correction_level_signal:
             executable = "_".join(["mc", cl[0], cl[1]])
@@ -102,7 +102,7 @@ elif sys.argv[1] == "mc":
             condor_submit(
                 executable, [output_file, str(params['bins']), str(params['highx'])] + veralista,
                 "_".join([params['mass'], cl[0], cl[1]]), 3600, 1000)
-    bash_filename = "_tmp/run_condor.sh"
+    bash_filename = "_tmp/run_condor_mc.sh"
     bash_file = open(bash_filename, "w")
     bash_file.write("#!/bin/bash\n")
     for p in process_list:
@@ -115,13 +115,13 @@ elif sys.argv[1] == "mc":
     proc.wait()
 
 elif sys.argv[1] == 'sig' and len(sys.argv) == 2:
-    output_dir = os.path.join(base_out_dir, "raw_files/signal/no_reranking/tight_wp")
+    output_dir = os.path.join(base_out_dir, "raw_files/signal/no_reranking/medium_wp")
     proc = Popen([fill_list("sig", output_dir), ], stdout=PIPE)
     print(proc.stdout.read())
     proc.wait()
     
 elif sys.argv[1] == "sig" and len(sys.argv) == 3 and sys.argv[2] == "merge":
-    output_dir = os.path.join(base_out_dir, "raw_files/signal/no_reranking/tight_wp")
+    output_dir = os.path.join(base_out_dir, "raw_files/signal/no_reranking/medium_wp")
     for params in bkg_files:
         for cl in correction_level_bkg:
             output_file = "_".join(["sig", params['era'], cl[0], cl[1]])
