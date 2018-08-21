@@ -130,12 +130,9 @@ for l in lep:
         canvases[i].cd(1)
         out_file.write("\n")
         filter_string = ""
-        lc = ""
         if l == "lep":
-            lc = "lepton"
             filter_string = "Leptonic_event"
         else:
-            lc = "chromo"
             filter_string = "!(Leptonic_event)"
         limits_down = ranges[0]
         limits_up = ranges[1]

@@ -14,6 +14,7 @@
 #include "TStyle.h"
 #include "TPaveText.h"
 #include "TLatex.h"
+#include "TGraphErrors.h"
 
 class HbbStylesNew {
 public:
@@ -33,6 +34,9 @@ public:
   void InitData(TH1* hist);
   /// define line style, width and color for signal sample
   void InitSignal(TH1* hist);
+
+  void InitGraph(TGraphErrors* graph, const char* xtit, const char* ytit="Number of Entries", int color=kBlack, int style=0);
+  
   /// define common legend style
   void SetLegendStyle(TLegend* leg);
   /// add CMSPreliminary logo, lumi and channel
@@ -198,7 +202,7 @@ void HbbStylesNew::InitHist(TH1 *hist, const char *xtit, const char *ytit, int c
   hist->SetLabelSize  (0.040,"Y");
   hist->SetLabelFont  (42   ,"Y");
   hist->SetTitleSize  (0.055,"X");
-  hist->SetTitleOffset(1.300,"X");
+  hist->SetTitleOffset(1.210,"X");
   hist->SetLabelOffset(0.014,"X");
   hist->SetLabelSize  (0.050,"X");
   hist->SetLabelFont  (42   ,"X");
@@ -295,6 +299,36 @@ HbbStylesNew::~HbbStylesNew() {
   delete wip;
   delete lumi;
   delete cmsprel;
+}
+
+
+void HbbStylesNew::InitGraph(TGraphErrors* hist, const char* xtit, const char* ytit, int color, int style) {
+  hist->GetXaxis()->SetTitle(xtit);
+  hist->GetYaxis()->SetTitle(ytit); 
+  hist->SetLineColor(color);
+  hist->SetLineWidth(    2.);
+  hist->SetFillColor(color);
+  hist->SetFillStyle(style);
+  //  hist->GetYaxis()->SetRangeUser(0.1,100000);
+  hist->GetYaxis()->SetTitleSize  (0.12);
+  hist->GetYaxis()->SetTitleOffset(0.5);
+  hist->GetYaxis()->SetLabelOffset(0.01);
+  hist->GetYaxis()->SetLabelSize(0.09);
+  hist->GetYaxis()->SetLabelFont(42);
+  hist->GetXaxis()->SetTitleSize  (0.12);
+  hist->GetXaxis()->SetTitleOffset(1.300);
+  hist->GetXaxis()->SetLabelOffset(0.014);
+  hist->GetXaxis()->SetLabelSize  (0.09);
+  hist->GetXaxis()->SetLabelFont  (42   );
+
+  hist->SetMarkerStyle(20);
+  hist->SetMarkerColor(color);
+  hist->SetMarkerSize (0.6);
+  hist->GetYaxis()->SetTitleFont(42);
+  hist->GetXaxis()->SetTitleFont(42);
+  hist->SetTitle("");
+
+  
 }
 
 #endif /* MSSMHBB_MACROS_DRAWER_HBBSTYLESNEW_C_ */
