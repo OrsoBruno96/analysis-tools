@@ -324,6 +324,7 @@ class DataContainer {
    * in third position and the corrected_jet #3 was in second position.
    */
   UInt_t reordering_[kLen];
+  UInt_t bjet_idxs_[3];
   {% if not data %}
   UInt_t matches_;
   Bool_t first_bjet_matched;
@@ -520,6 +521,7 @@ void DataContainer::CreateTree(TTree* t) {
   t->Branch("Jet_newPhi", new_phi_, "Jet_newPhi[nJet]/F");
   t->Branch("Jet_newMass", new_mass_, "Jet_newMass[nJet]/F");
   t->Branch("Jet_newOriginalOrder", reordering_, "Jet_newOriginalOrder[nJet]/i");
+  t->Branch("Jet_BJetselectedIdx", bjet_idxs_, "Jet_BJetselectedIdx[3]/i");
   t->Branch("Jet_newBtagDeepB", new_btag_deep_, "Jet_newBtagDeepB[nJet]/F");
   t->Branch("Weigth", &weigth, "Weigth/F");
   {% if not data %}
@@ -996,6 +998,9 @@ void DataContainer::fill_histogram(TTree* tree, \
       new_mass_[k] = corrected_jet[k].M();
       new_btag_deep_[k] = btag_deep_[corrected_jet[k].Idx()];
       reordering_[k] = corrected_jet[k].Idx();
+    }
+    for (unsigned int k = 0; k < 3; k++) {
+      bjet_idxs_[k] = bjets[k].Idx();
     }
     cout << "\033[0;32mFilling with m = " << mass_ << \
       " and pt = " << bjets[0].Pt() << ". Weigth of this event: " << weigth \
