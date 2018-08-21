@@ -1,0 +1,14 @@
+{
+    "histograms": [
+{% for h in histos %}
+        {
+            "file_name": "{{ h.file }}",
+            "name": "{{ h.name }}",
+            "legend": "{{ h.legend }}",
+            "color": {{ h.color }}
+        }{% if not loop.last %},{% endif %}{% endfor %}
+    ],
+    "title": "{{ title }}",
+    "x_axis": "{{ x_axis }}",
+    "y_axis": "{{ y_axis }}"
+}
