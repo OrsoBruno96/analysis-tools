@@ -14,13 +14,11 @@
 #include <math.h> 
 #include "TMath.h" 
 
-using namespace analysis::tools;
 
 ClassImp(bukin) 
 
  bukin::bukin(const char *name, const char *title, 
                         RooAbsReal& _x,
-                        RooAbsReal& _Ap,
                         RooAbsReal& _Xp,
                         RooAbsReal& _sp,
                         RooAbsReal& _rho1,
@@ -28,9 +26,8 @@ ClassImp(bukin)
                         RooAbsReal& _xi) :
    RooAbsPdf(name,title), 
    x("x","x",this,_x),
-   Ap("Ap","Ap",this,_Ap),
-    Xp(" Xp"," Xp",this,_Xp),
-    sp(" sp"," sp",this,_sp),
+   Xp("Xp"," Xp",this,_Xp),
+   sp("sp"," sp",this,_sp),
    rho1("rho1","rho1",this,_rho1),
    rho2("rho2","rho2",this,_rho2),
    xi("xi","xi",this,_xi)
@@ -41,9 +38,8 @@ ClassImp(bukin)
  bukin::bukin(const bukin& other, const char* name) :  
    RooAbsPdf(other,name), 
    x("x",this,other.x),
-   Ap("Ap",this,other.Ap),
-    Xp(" Xp",this,other.Xp),
-    sp(" sp",this,other.sp),
+    Xp("Xp",this,other.Xp),
+    sp("sp",this,other.sp),
    rho1("rho1",this,other.rho1),
    rho2("rho2",this,other.rho2),
    xi("xi",this,other.xi)
@@ -80,7 +76,7 @@ ClassImp(bukin)
      interno = -log2*TMath::Power(ratio, 2);
    }
 
-   return Ap*TMath::Exp(interno);
+   return TMath::Exp(interno);
  } 
 
 

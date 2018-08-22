@@ -62,7 +62,7 @@ for c in correction_level_bkg:
         command = [
             "FitBackgroundRoofit",
             "--input", ] + input_names + [
-                "--output", out_basename + ".txt",
+                "--output", out_basename + ".root",
                 "--print", out_basename + ".png",
                 "--min-x", str(sub["min"]),
                 "--max-x", str(sub["max"]),

@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     ("max-x", bp::value<Float_t>()->default_value(1500), "Max x to choose for the fit")
     ("bins", bp::value<UInt_t>()->required(), "Number of bins for fit")
     ("initial-pars", bp::value<string>()->required(), "Initial parameters for the fit. Give a filename")
-
+    ("model", bp::value<string>()->required(), "Model to choose for the fit")
     ;
   
   bp::variables_map vm;
@@ -63,11 +63,10 @@ int main(int argc, char* argv[]) {
   if (print) {
     print_filename = vm["print"].as<vector<string>>();
   }
-
-  
+  string model_name(vm["model"].as<string>());  
   vector<string> input_files = vm["input"].as<vector<string>>();
   string output_file = vm["output"].as<string>();
-  UInt_t npars = 6;
+  UInt_t npars = 0;
   string filename_pars = vm["initial-pars"].as<string>();
   TChain chain("output_tree");
   string filter_string("Leptonic_event");
@@ -78,12 +77,6 @@ int main(int argc, char* argv[]) {
   TTree* tree = chain.CopyTree(filter_string.c_str());
   
   RooRealVar Mass("Mass", "Mass", minx, maxx);
-  RooRealVar p0("p0", "p0", 0, 0.007);
-  RooRealVar p1("p1", "p1", 1400, 2200);
-  RooRealVar p3("p3", "p3", 10, 100);
-  RooRealVar p4("p4", "p4", 10, 100);
-  RooRealVar p5("p5", "p5", 0, 10);
-  RooRealVar p6("p6", "p6", -0.3, -0.0001);
 
   vector<Float_t> init_pars;
   {
@@ -94,17 +87,6 @@ int main(int argc, char* argv[]) {
     }
     infile.close();
   }
-  if (init_pars.size() != npars) {
-    cerr << "The initial parameters given have not the right size." << endl;
-    cerr << "I want this size: " << npars << " and i got " << init_pars.size() << endl;
-    return -6;
-  }
-
-
-  vector<RooRealVar*> variables( {&p0, &p1, &p3, &p4, &p5, &p6} );
-  for (unsigned int i = 0; i < init_pars.size(); i++) {
-    variables[i]->setVal(init_pars[i]);
-  }
   
   auto frame = Mass.frame();
   
@@ -112,12 +94,66 @@ int main(int argc, char* argv[]) {
   tree->Draw("Mass>>histo", "");
   RooDataHist data("Roohisto", "Roohisto", RooArgList(Mass), RooFit::Import(histo));
   data.plotOn(frame);
-  analysis::tools::super_novosibirsk pdf("super_novosibirsk", "super_novosibirsk", Mass, p0, p1, p3, p4, p5, p6);
-  auto fitResult = pdf.fitTo(data);
-  pdf.plotOn(frame);
+
+  RooAbsPdf* pdf = nullptr;
+  vector<RooRealVar*> variables_to_delete;
+  
+  if (model_name == "super_novosibirsk") {
+    RooRealVar* p0 = new RooRealVar("p0", "p0", 0, 0.007);
+    RooRealVar* p1 = new RooRealVar("p1", "p1", 1400, 2200);
+    RooRealVar* p3 = new RooRealVar("p3", "p3", 10, 100);
+    RooRealVar* p4 = new RooRealVar("p4", "p4", 10, 100);
+    RooRealVar* p5 = new RooRealVar("p5", "p5", 0, 10);
+    RooRealVar* p6 = new RooRealVar("p6", "p6", -0.3, -0.0001);
+    pdf = new super_novosibirsk("super_novosibirsk", "super_novosibirsk",
+                                Mass, *p0, *p1, *p3, *p4, *p5, *p6);
+    vector<RooRealVar*> variables( {p0, p1, p3, p4, p5, p6} );
+    for (unsigned int i = 0; i < init_pars.size(); i++) {
+      variables[i]->setVal(init_pars[i]);
+    }
+    variables_to_delete.push_back(p0);
+    variables_to_delete.push_back(p1);
+    variables_to_delete.push_back(p3);
+    variables_to_delete.push_back(p4);
+    variables_to_delete.push_back(p5);
+    variables_to_delete.push_back(p6);
+    npars = 6;
+  } else if (model_name == "bukin") {
+    RooRealVar* p1 = new RooRealVar("Xp", "Xp", 10, 500);
+    RooRealVar* p3 = new RooRealVar("sp", "sp", 1, 100);
+    RooRealVar* p4 = new RooRealVar("rho1", "rho1", 0, 10);
+    RooRealVar* p5 = new RooRealVar("rho2", "rho2", 0, 10);
+    RooRealVar* p6 = new RooRealVar("xi", "xi", -0.99, 0.99);
+    pdf = new bukin("bukin", "bukin",
+                                Mass, *p1, *p3, *p4, *p5, *p6);
+    vector<RooRealVar*> variables( {p1, p3, p4, p5, p6} );
+    for (unsigned int i = 0; i < init_pars.size(); i++) {
+      variables[i]->setVal(init_pars[i]);
+    }
+    variables_to_delete.push_back(p1);
+    variables_to_delete.push_back(p3);
+    variables_to_delete.push_back(p4);
+    variables_to_delete.push_back(p5);
+    variables_to_delete.push_back(p6);
+    npars = 5;
+  } else {
+    cerr << "No matching model found. Aborting" << endl;
+    return -8;
+  }
+
+
+  if (init_pars.size() != npars) {
+    cerr << "The initial parameters given have not the right size." << endl;
+    cerr << "I want this size: " << npars << " and i got " << init_pars.size() << endl;
+    return -6;
+  }
+
+  
+  auto fitResult = pdf->fitTo(data);
+  pdf->plotOn(frame);
 
   RooWorkspace w("w");
-  w.import(pdf);
+  w.import(*pdf);
   w.writeToFile(output_file.c_str(), true);
   c1.cd();
   frame->Draw();
@@ -126,6 +162,9 @@ int main(int argc, char* argv[]) {
       c1.Print(it.c_str());
     }
   }
-  
+
+  for (auto it: variables_to_delete) {
+    delete it;
+  }
   return 0;
 }

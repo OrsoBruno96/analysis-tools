@@ -1,5 +1,5 @@
 <lcgdict>
-  <class name="analysis::tools::super_novosibirsk" />
-  <class name="analysis::tools::bukin" />
+  <class name="super_novosibirsk" />
+  <class name="bukin" />
 </lcgdict>
 

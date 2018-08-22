@@ -13,9 +13,6 @@
 #include "RooAbsReal.h"
 #include "RooAbsCategory.h"
 
-namespace analysis {
-  namespace tools {
-
 
 class super_novosibirsk : public RooAbsPdf {
 public:
@@ -51,6 +48,4 @@ private:
 
 
 
-  }
-}
 #endif

@@ -14,16 +14,12 @@
 #include "RooAbsCategory.h"
 
 
-namespace analysis {
-  namespace tools {
- 
 
 class bukin : public RooAbsPdf {
 public:
   bukin() {} ; 
   bukin(const char *name, const char *title,
 	      RooAbsReal& _x,
-	      RooAbsReal& _Ap,
 	      RooAbsReal& _Xp,
 	      RooAbsReal& _sp,
 	      RooAbsReal& _rho1,
@@ -36,7 +32,6 @@ public:
 protected:
 
   RooRealProxy x ;
-  RooRealProxy Ap ;
   RooRealProxy Xp ;
   RooRealProxy sp ;
   RooRealProxy rho1 ;
@@ -51,6 +46,4 @@ private:
 };
 
 
-  }
-}
 #endif
