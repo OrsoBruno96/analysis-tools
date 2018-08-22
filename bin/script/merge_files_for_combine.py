@@ -15,12 +15,16 @@ shape_bkg = False
 lep = [False, True]
 eras = ["C", "D", "E", "F"]
 mass_points = ["120", "350", "1200"]
+
+lumi = 35.6
+
 limits = {
     "120": (80, 1000, 60),
     "350": (100, 1000, 120),
     "1200": (100, 2000, 90),
 }
 
+scale_factor_MC = lumi/1000
 
 base_directory = "/nfs/dust/cms/user/zorattif/output"
 specific_directory = "no_reranking/medium_wp"
@@ -79,6 +83,7 @@ for mass in mass_points:
             appo_bkg.Draw("Mass>>bbnb_Mbb", " && ".join([filter_string, limit_string]), "")
             appo_mc.Draw("Mass>>MC_bbb_Mbb", "Weigth*" + " && ".join([filter_string,
                                                                       limit_string]), "")
+            histo_mc.Scale(scale_factor_MC)
             appo_sig.Draw("Mass>>sig_bbb_Mbb", " && ".join([filter_string, limit_string]), "")
             bkg_events = histo_bkg.GetEntries()
             histo_bkg.Write()
