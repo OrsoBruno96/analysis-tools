@@ -98,11 +98,13 @@ int main(int argc, char* argv[]) {
     ("model", bp::value<string>()->required(), "Model to choose for the fit")
     ("full-hadronic", "Fits full hadronic channel instead of the leptonic")
     ("print-initial", "Prints the function with the initial parameters")
+    ("use-integral", "Compute minimization using average integral of function instead of value in center of bin")
     ;
   bp::variables_map vm;
   bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
 
   bool print = false, logy = false, mc = true, print_initial = false, full_hadronic = false;
+  bool use_integral = false;
   Float_t lumi = 0;
   if (vm.count("lumi")) {
     mc = false;
@@ -125,6 +127,9 @@ int main(int argc, char* argv[]) {
   }
   if (vm.count("full-hadronic")) {
     full_hadronic = true;
+  }
+  if (vm.count("use-integral")) {
+    use_integral = true;
   }
   std::function<Double_t(Double_t* x, Double_t* p)> model;
   string model_name(vm["model"].as<string>());
@@ -225,7 +230,11 @@ int main(int argc, char* argv[]) {
     clone.SetFillColor(kBlue);
     clone.DrawCopy("same");
   }
-  data_histo.Fit(&super_novosibirsk, "RLME", "", minx, maxx);
+  string fit_options("RLMES");
+  if (use_integral) {
+    fit_options += string("I");
+  }
+  data_histo.Fit(&super_novosibirsk, fit_options.c_str(), "", minx, maxx);  
   if (!print_initial) {
     super_novosibirsk.SetFillColor(kRed);
     super_novosibirsk.DrawClone("same");
