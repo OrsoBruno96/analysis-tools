@@ -1,8 +1,16 @@
 # analysis-tools
 Core codes for the analysis framework
 
-## Detail of the files - Zoratti
-- `bin/AnalysisJets2.cc` only cuts on pt, eta and btagging
-- `bin/AnalysisJetsRegCorr.cc` corrections with the 2017 algorithm for jets
-- `bin/AnalysisjetsCorrSmeared.cc` same as above but smearing MC data to simulate real data.
-- `bin/AnalysisJetsSmrBTagRegFSR.cc` first apply smearing to data, then apply scale factors to correct MC for btag, then uses regression algorithm to correct energy and then corrects for final state radiation.
+## Compile
+Works with CMSSW_9_4_9.
+
+```bash
+export SCRAM_ARCH=slc6_amd64_gcc630
+cmsrel CMSSW_9_4_9
+cd CMSSW_9_4_9/src
+git clone https://github.com/OrsoBruno96/analysis-tools.git Analysis/Tools
+cd Analysis/Tools/bin
+make all
+cd ..
+scram b -k -j4
+```
