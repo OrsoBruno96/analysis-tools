@@ -24,7 +24,7 @@
 #include "tdrstyle.C"
 #include "Analysis/Tools/interface/HbbStylesNew.h"
 
-#include "Analysis/Tools/interface/super_novosibirsk.h"
+#include "Analysis/Tools/src/classes.h"
 
 
 
