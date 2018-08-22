@@ -784,12 +784,14 @@ void DataContainer::fill_histogram(TTree* tree, \
     // Now check btags
     unsigned int btaggati = 0;
     vector<Jet> bjets;
+    Int_t counter = 0;
     leptonic = false;
     if (debug) {
       cout << "Starting btagging check" << endl;
     }
     for (auto it = corrected_jet.begin(); it < corrected_jet.end() && \
-           btaggati < 3; it++) {
+           counter < 3; it++) {
+      counter++;
       if (debug) {
         cout << "pt before: " << jet_pt_[it->Idx()] << "\neta: " <<     \
           jet_eta_[it->Idx()] << "\tcurrent_jet_pt: " << it->Pt()       \
