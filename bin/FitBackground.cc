@@ -96,12 +96,13 @@ int main(int argc, char* argv[]) {
     ("bins", bp::value<UInt_t>()->required(), "Number of bins for fit")
     ("initial-pars", bp::value<string>()->required(), "Initial parameters for the fit. Give a filename")
     ("model", bp::value<string>()->required(), "Model to choose for the fit")
+    ("full-hadronic", "Fits full hadronic channel instead of the leptonic")
     ("print-initial", "Prints the function with the initial parameters")
     ;
   bp::variables_map vm;
   bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
 
-  bool print = false, logy = false, mc = true, print_initial = false;
+  bool print = false, logy = false, mc = true, print_initial = false, full_hadronic = false;
   Float_t lumi = 0;
   if (vm.count("lumi")) {
     mc = false;
@@ -121,6 +122,9 @@ int main(int argc, char* argv[]) {
   }
   if (vm.count("print-initial")) {
     print_initial = true;
+  }
+  if (vm.count("full-hadronic")) {
+    full_hadronic = true;
   }
   std::function<Double_t(Double_t* x, Double_t* p)> model;
   string model_name(vm["model"].as<string>());
@@ -145,7 +149,13 @@ int main(int argc, char* argv[]) {
   }
   
   TChain chain("output_tree");
-  string filter_string("Leptonic_event");
+  
+  string filter_string;
+  if (full_hadronic) {
+    filter_string = "!Leptonic_event";
+  } else {
+    filter_string = "Leptonic_event";
+  }
   vector<string> input_files = vm["input"].as<vector<string>>();
   string output_file = vm["output"].as<string>();
   vector<string> print_file;
