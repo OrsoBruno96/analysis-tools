@@ -38,6 +38,7 @@
 #include "TCanvas.h"
 #include "TRandom3.h"
 #include "TChain.h"
+#include "TParameter.h"
 
 #include "JetMETCorrections/Modules/interface/JetResolution.h"
 #include "Analysis/Tools/interface/BTagCalibrationStandalone.h"
@@ -746,6 +747,13 @@ void DataContainer::fill_histogram(TTree* tree, \
     how_many = tree->GetEntries();
   }
 
+
+  ULong64_t n_triggered_lep = 0, n_triggered_chr = 0, \
+    n_cuts_and_btag_lep = 0, n_cuts_and_btag_chr = 0, n_kinematics_lep = 0, \
+    n_kinematics_chr = 0;
+  ULong64_t n_pass_veto_lep = 0, n_pass_veto_chr = 0, n_trig_matched_lep = 0, \
+    n_trig_matched_chr = 0;
+  
   for (ULong64_t event = 0; event < how_many; event++) {
     tree->GetEntry(event);
     if ({% if data %}true{% else %}apply_trigger_cut{% endif %}) {
@@ -760,6 +768,12 @@ void DataContainer::fill_histogram(TTree* tree, \
       }
       if (!trigger_path_lep && !trigger_path_had) {
         continue;
+      }
+      if (trigger_path_lep) {
+        n_triggered_lep++;
+      }
+      if (trigger_path_had) {
+        n_triggered_chr++;
       }
     }
     weigth = 1;
@@ -888,28 +902,8 @@ void DataContainer::fill_histogram(TTree* tree, \
       cout << "This event is marked as leptonic: " << leptonic \
            << " now i check for real pt cut" << endl;
     }
-
-    if (apply_fourth_jet_veto) {
-      if (corrected_jet.size() > 3) {
-        Float_t right_veto = leptonic ? veto_fourth_jet_lep : veto_fourth_jet_chr;
-        if (debug) {
-          cout << "Checking for veto. Fourth jet has pt: " << corrected_jet[3].Pt() << endl;
-          cout << "This event is leptonic? " << leptonic << "\t so the right_veto is: " \
-               << right_veto << endl;
-        }
-        if (corrected_jet[3].Pt() > right_veto) {
-          if (debug) {
-            cout << "Skipping for fourth jet veto" << endl;
-          }
-          continue;
-        }
-      } else {
-        if (debug) {
-          cout << "Not checking fourth jet veto because there is no fourth jet" << endl;
-        }
-      }
-    }
-
+    
+    
     Bool_t successs = true;
     for (UInt_t i = 0; i < 2; i++) {
       if (bjets[i].Pt() < right_pt_cut(leptonic, i)) {
@@ -936,7 +930,38 @@ void DataContainer::fill_histogram(TTree* tree, \
         }
       }
     }
+    if (leptonic) {
+      n_cuts_and_btag_lep++;
+    } else {
+      n_cuts_and_btag_chr++;
+    }
 
+    if (apply_fourth_jet_veto) {
+      if (corrected_jet.size() > 3) {
+        Float_t right_veto = leptonic ? veto_fourth_jet_lep : veto_fourth_jet_chr;
+        if (debug) {
+          cout << "Checking for veto. Fourth jet has pt: " << corrected_jet[3].Pt() << endl;
+          cout << "This event is leptonic? " << leptonic << "\t so the right_veto is: " \
+               << right_veto << endl;
+        }
+        if (corrected_jet[3].Pt() > right_veto) {
+          if (debug) {
+            cout << "Skipping for fourth jet veto" << endl;
+          }
+          continue;
+        }
+      } else {
+        if (debug) {
+          cout << "Not checking fourth jet veto because there is no fourth jet" << endl;
+        }
+      }
+    }
+    if (leptonic) {
+      n_pass_veto_lep++;
+    } else {
+      n_pass_veto_chr++;
+    }
+    
     if (debug) {
       cout << "I check if the distance is enough" << endl;
     }
@@ -957,7 +982,12 @@ void DataContainer::fill_histogram(TTree* tree, \
     if (debug) {
       cout << "Distance was enough" << endl;
     }
-
+    if (leptonic) {
+      n_kinematics_lep++;
+    } else {
+      n_kinematics_chr++;
+    }
+    
     {% if not data %}
     unsigned int matched = 0;
     for (unsigned int i = 0; i < 2; i++) {
@@ -995,7 +1025,11 @@ void DataContainer::fill_histogram(TTree* tree, \
       second_bjet_matched = (appo2 != -2);
       {% endif %}
     }
-
+    if (leptonic) {
+      n_trig_matched_lep++;
+    } else {
+      n_trig_matched_chr++;
+    }
     if (corrections_after) {
       apply_all_corrections(correction_level);
       for (auto it : corrected_jet) {
@@ -1074,6 +1108,28 @@ void DataContainer::fill_histogram(TTree* tree, \
     }
     {% endif %}
   }
+
+  // no memory leak in the following line. All this stuff is deleted by default.
+  auto Tn_triggered_lep = new TParameter<Float_t>("n_triggered_lep", n_triggered_lep);
+  out_tree->GetUserInfo()->Add(Tn_triggered_lep);
+  auto Tn_cuts_and_btag_lep = new TParameter<Float_t>("n_cuts_and_btag_lep", n_cuts_and_btag_lep);
+  out_tree->GetUserInfo()->Add(Tn_cuts_and_btag_lep);
+  auto Tn_kinematics_lep = new TParameter<Float_t>("n_kinematics_lep", n_kinematics_lep);
+  out_tree->GetUserInfo()->Add(Tn_kinematics_lep);
+  auto Tn_pass_veto_lep = new TParameter<Float_t>("n_pass_veto_lep", n_pass_veto_lep);
+  out_tree->GetUserInfo()->Add(Tn_pass_veto_lep);
+  auto Tn_trig_matched_lep = new TParameter<Float_t>("n_trig_matched_lep", n_trig_matched_lep);
+  out_tree->GetUserInfo()->Add(Tn_trig_matched_lep);
+  auto Tn_triggered_chr = new TParameter<Float_t>("n_triggered_chr", n_triggered_chr);
+  out_tree->GetUserInfo()->Add(Tn_triggered_chr);
+  auto Tn_cuts_and_btag_chr = new TParameter<Float_t>("n_cuts_and_btag_chr", n_cuts_and_btag_chr);
+  out_tree->GetUserInfo()->Add(Tn_cuts_and_btag_chr);
+  auto Tn_kinematics_chr = new TParameter<Float_t>("n_kinematics_chr", n_kinematics_chr);
+  out_tree->GetUserInfo()->Add(Tn_kinematics_chr);
+  auto Tn_pass_veto_chr = new TParameter<Float_t>("n_pass_veto_chr", n_pass_veto_chr);
+  out_tree->GetUserInfo()->Add(Tn_pass_veto_chr);
+  auto Tn_trig_matched_chr = new TParameter<Float_t>("n_trig_matched_chr", n_trig_matched_chr);  
+  out_tree->GetUserInfo()->Add(Tn_trig_matched_chr);
 }
 
 inline Float_t delta_R(const Float_t eta1, const Float_t phi1, \
