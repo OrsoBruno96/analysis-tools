@@ -86,6 +86,7 @@ const Float_t lepton_in_jet_pt_cut = 12;
 const bool debug = false;
 const bool corrections_after = true;
 const bool do_reranking = false;
+const bool apply_fourth_jet_veto = true;
 
 const CorrectionLevel correction_level = CorrectionLevel::{{ cl }};
 const bool apply_trigger_cut = {{ trig }};
@@ -888,7 +889,7 @@ void DataContainer::fill_histogram(TTree* tree, \
            << " now i check for real pt cut" << endl;
     }
 
-    {
+    if (apply_fourth_jet_veto) {
       if (corrected_jet.size() > 3) {
         Float_t right_veto = leptonic ? veto_fourth_jet_lep : veto_fourth_jet_chr;
         if (debug) {
