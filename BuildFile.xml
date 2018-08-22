@@ -5,6 +5,10 @@
 <use name="rootgraphics"/>
 <use name="roofit" />
 <use name="boost" />
+<use name="boost_program_options" />
+<export>
+  <lib name="1"/>
+</export>
 <export>
   <lib name="1"/>
 </export>
