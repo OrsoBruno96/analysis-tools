@@ -15,6 +15,9 @@
 #include <iostream>
 #include "TMath.h" 
 
+using namespace analysis::tools;
+
+
 ClassImp(super_novosibirsk) 
 
  super_novosibirsk::super_novosibirsk(const char *name, const char *title, 
