@@ -10,6 +10,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 #include <boost/program_options.hpp>
 
@@ -47,15 +48,16 @@ int main(int argc, char* argv[]) {
   using std::string; using std::cout; using std::endl; using std::cerr; using std::vector;
   bp::options_description cmdline_options("Command line arguments");
   cmdline_options.add_options()
-    ("help,h", "Produce help message")
-    ("output,o", bp::value<string>(), "Output ROOT file")
-    ("input,i", bp::value<vector<string>>()->multitoken()->composing(), "Input ROOT files")
-    ("print,p", bp::value<vector<string>>()->multitoken()->composing(), "Optional: files where to print the canvas with fitted function")
-    ("log-y,L", "Set log scale for y axis")
-    ("lumi,l", bp::value<Float_t>(), "Luminosity in fb-1 to be shown. If not provided, the dataset is assumed to be a MC")
+    ("help", "Produce help message")
+    ("output", bp::value<string>()->required(), "Output ROOT file")
+    ("input", bp::value<vector<string>>()->multitoken()->composing()->required(), "Input ROOT files")
+    ("print", bp::value<vector<string>>()->multitoken()->composing(), "Optional: files where to print the canvas with fitted function")
+    ("log-y", "Set log scale for y axis")
+    ("lumi", bp::value<Float_t>(), "Luminosity in fb-1 to be shown. If not provided, the dataset is assumed to be a MC")
     ("min-x", bp::value<Float_t>()->default_value(0), "Min x to choose for the fit")
     ("max-x", bp::value<Float_t>()->default_value(1500), "Max x to choose for the fit")
-    ("bins", bp::value<UInt_t>(), "Number of bins for fit")
+    ("bins", bp::value<UInt_t>()->required(), "Number of bins for fit")
+    ("initial-pars", bp::value<string>()->required(), "Initial parameters for the fit. Give a filename")
     ;
   bp::variables_map vm;
   bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
@@ -72,27 +74,14 @@ int main(int argc, char* argv[]) {
   if (vm.count("log-y")) {
     logy = true;
   }
-  if (vm.count("bins") == 0) {
-    cerr << "Please specify number of bins" << endl;
-    return -3;
-  }
   
   if (vm.count("help")) {
     cout << cmdline_options << endl;
     return 0;
   }
-  if (vm.count("output") == 0) {
-    cerr << "Please specify output file." << endl;
-    return -1;
-  }
-  if (vm.count("input") == 0) {
-    cerr << "Please specify input file." << endl;
-    return -2;
-  }
   if (vm.count("print")) {
     print = true;
   }
-
   
   TChain chain("output_tree");
   string filter_string("Leptonic_event");
@@ -105,6 +94,22 @@ int main(int argc, char* argv[]) {
   Float_t minx = vm["min-x"].as<Float_t>();
   Float_t maxx = vm["max-x"].as<Float_t>();
   UInt_t bins = vm["bins"].as<UInt_t>();
+  string filename_pars = vm["initial-pars"].as<string>();
+  // vector<Float_t> init_pars( {0.001, 1862, 240559, 43, 62, 1, -0.008} );
+  vector<Float_t> init_pars;
+  std::ifstream infile(filename_pars.c_str());
+  {
+    Float_t appo;
+    while (infile >> appo) {
+      init_pars.push_back(appo);
+    }
+  }
+  infile.close();
+  if (init_pars.size() != 7) {
+    cerr << "The initial parameters given have not the right size." << endl;
+    return -6;
+  }
+  
   Double_t binning = (maxx - minx) / bins;
   string binnumber;
   {
@@ -144,6 +149,14 @@ int main(int argc, char* argv[]) {
   chain.Draw("Mass>>data_histo",
              (filter_string + string(" && ") + limit_string).c_str(),
              "");
+
+  for (UInt_t i = 0; i < init_pars.size(); i++) {
+    if (i == 6) {
+      init_pars[i] *= -1;
+    }
+    super_novosibirsk.SetParameter(i, init_pars[i]);
+  }
+  
   super_novosibirsk.SetParameters(0.001, 1862, 240559, 43, 62, 1, -0.008);
   data_histo.Fit(&super_novosibirsk, "RLME", "", minx, maxx);
   super_novosibirsk.DrawClone("same");
@@ -171,7 +184,7 @@ int main(int argc, char* argv[]) {
   Double_t chi2 = 0;
   for (Int_t i = 1; i < data_histo.GetNbinsX(); i++) {
     Double_t x = data_histo.GetBinCenter(i);
-    Double_t exp_value = super_novosibirsk.Integral(x - binning, x + binning);
+    Double_t exp_value = super_novosibirsk.Integral(x - binning/2, x + binning/2)/binning;
     Double_t divisor = TMath::Sqrt(exp_value);
     Double_t y = (data_histo.GetBinContent(i) - exp_value)/divisor;
     
@@ -189,7 +202,7 @@ int main(int argc, char* argv[]) {
   cout << "pvalue: " << pvalue << endl;
   
   TGraphErrors graph(dx, dy, ddx, ddy);
-  graph.Draw();
+  graph.Draw("AP");
   graph.GetXaxis()->SetLimits(minx, maxx);
   style.InitGraph(&graph, "M_{12} [GeV]", "#frac{Data - Fit}{#sqrt{Fit}}");
 
