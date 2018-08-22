@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <functional>
 
 #include <boost/program_options.hpp>
 
@@ -38,7 +39,43 @@ Double_t super_novosibirsk(Double_t x, Double_t p0, Double_t p1, Double_t p2, Do
                       0.5*sigma02);
   return p2*first*second;
 }
+
+
+
+Double_t bukin(Double_t x, Double_t Ap, Double_t Xp, Double_t sp, Double_t rho1, Double_t rho2, Double_t xi) {
+  const Double_t sqr2log2 = TMath::Sqrt(2*TMath::Log(2));
+  const Double_t log2 = TMath::Log(2);
+  Double_t x1 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi + 1) - 1);
+  Double_t x2 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi + 1) + 1);
+
+  Double_t interno = 0;
+  
+  if (x < x1) {
+    interno = -log2 + rho1*TMath::Power((x - x1)/(Xp - x1), 2);
+    Double_t sopra, sotto;
+    sopra = xi*TMath::Sqrt(1 + xi*xi)*(x - x1)*sqr2log2;
+    sotto = sp*TMath::Log(xi + TMath::Sqrt(1 + xi*xi))*TMath::Power(TMath::Sqrt(1 + xi*xi) - xi, 2);
+    interno += sopra/sotto;
+  } else if (x > x2) {
+    interno = -log2 + rho2*TMath::Power((x - x2)/(Xp - x2), 2);
+    Double_t sopra, sotto;
+    sopra = xi*TMath::Sqrt(1 + xi*xi)*(x - x2)*sqr2log2;
+    sotto = sp*TMath::Log(xi + TMath::Sqrt(1 + xi*xi))*TMath::Power(TMath::Sqrt(1 + xi*xi) + xi, 2);
+    interno -= sopra/sotto;
+  } else {
+    Double_t sopra = TMath::Log(1 + 2*xi*TMath::Sqrt(1 + xi*xi)*(x - Xp)/(sqr2log2 * sp));
+    Double_t sotto = TMath::Log(1 + 2*xi*(xi - TMath::Sqrt(xi*xi + 1)));
+    Double_t ratio = sopra/sotto;
+    interno = -log2*TMath::Power(ratio, 2);
+  }
+
+  return Ap*TMath::Exp(interno);
 }
+
+  
+}
+
+
 
 
 
@@ -58,13 +95,13 @@ int main(int argc, char* argv[]) {
     ("max-x", bp::value<Float_t>()->default_value(1500), "Max x to choose for the fit")
     ("bins", bp::value<UInt_t>()->required(), "Number of bins for fit")
     ("initial-pars", bp::value<string>()->required(), "Initial parameters for the fit. Give a filename")
+    ("model", bp::value<string>()->required(), "Model to choose for the fit")
+    ("print-initial", "Prints the function with the initial parameters")
     ;
   bp::variables_map vm;
   bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
 
-  bool print = false;
-  bool logy = false;
-  bool mc = true;
+  bool print = false, logy = false, mc = true, print_initial = false;
   Float_t lumi = 0;
   if (vm.count("lumi")) {
     mc = false;
@@ -81,6 +118,30 @@ int main(int argc, char* argv[]) {
   }
   if (vm.count("print")) {
     print = true;
+  }
+  if (vm.count("print-initial")) {
+    print_initial = true;
+  }
+  std::function<Double_t(Double_t* x, Double_t* p)> model;
+  string model_name(vm["model"].as<string>());
+  UInt_t npars = 0;
+  if (model_name == "super_novosibirsk") {
+    model = [&](double* x, double* p) {
+      return bkg_model_fit::super_novosibirsk(x[0], p[0],
+                                              p[1], p[2],
+                                              p[3], p[4], p[5], p[6]);
+    };
+    npars = 7;
+  } else if (model_name == "bukin") {
+    model = [&](double* x, double* p) {
+      return bkg_model_fit::bukin(x[0], p[0],
+                                  p[1], p[2],
+                                  p[3], p[4], p[5]);
+    };
+    npars = 6;
+  } else {
+    cerr << "No available model with the name given." << endl;
+    return -7;
   }
   
   TChain chain("output_tree");
@@ -105,8 +166,9 @@ int main(int argc, char* argv[]) {
     }
   }
   infile.close();
-  if (init_pars.size() != 7) {
+  if (init_pars.size() != npars) {
     cerr << "The initial parameters given have not the right size." << endl;
+    cerr << "I want this size: " << npars << " and i got " << init_pars.size() << endl;
     return -6;
   }
   
@@ -135,12 +197,7 @@ int main(int argc, char* argv[]) {
   for (auto it: input_files) {
     chain.Add(it.c_str());
   }
-  TF1 super_novosibirsk("super_novosibirsk",
-                        [&](double* x, double* p) {
-                          return bkg_model_fit::super_novosibirsk(x[0], p[0],
-                                                   p[1], p[2],
-                                                   p[3], p[4], p[5], p[6]);
-                        }, minx, maxx + 1, 7);
+  TF1 super_novosibirsk("super_novosibirsk", model, minx, maxx, npars);
   TH1F data_histo("data_histo", "data_histo", bins, minx, maxx);
   style.InitHist(&data_histo, "M_{12} [GeV]", (string("Events / ") + binnumber + string(" GeV")).c_str());
   data_histo.SetTitle("Background");
@@ -156,10 +213,16 @@ int main(int argc, char* argv[]) {
     }
     super_novosibirsk.SetParameter(i, init_pars[i]);
   }
-  
-  super_novosibirsk.SetParameters(0.001, 1862, 240559, 43, 62, 1, -0.008);
+  TF1 clone(super_novosibirsk);
+  if (print_initial) {
+    clone.SetFillColor(kBlue);
+    clone.DrawCopy("same");
+  }
   data_histo.Fit(&super_novosibirsk, "RLME", "", minx, maxx);
-  super_novosibirsk.DrawClone("same");
+  if (!print_initial) {
+    super_novosibirsk.SetFillColor(kRed);
+    super_novosibirsk.DrawClone("same");
+  }
 
   string appo;
   if (mc) {
@@ -174,8 +237,6 @@ int main(int argc, char* argv[]) {
     c1->SetLogy();
   }
   leg.Draw("same");
-
-
   
   pad_res.cd();
   TVectorD dx(data_histo.GetNbinsX() - 1), dy(data_histo.GetNbinsX() - 1), \
@@ -196,18 +257,17 @@ int main(int argc, char* argv[]) {
   }
 
   cout << "Chi2: " << chi2 << endl;
-  UInt_t ndof = bins - 7;
+  UInt_t ndof = bins - npars;
   Float_t pvalue = TMath::Prob(chi2, ndof);
   cout << "ndof: " << ndof << endl;
   cout << "pvalue: " << pvalue << endl;
-  
+
+
   TGraphErrors graph(dx, dy, ddx, ddy);
   graph.Draw("AP");
   graph.GetXaxis()->SetLimits(minx, maxx);
   style.InitGraph(&graph, "M_{12} [GeV]", "#frac{Data - Fit}{#sqrt{Fit}}");
 
-
-  
   pad_histo.cd();
   TPaveText fit_result(0.65, 0.8, 0.73, 0.85, "NDC");
   fit_result.SetBorderSize(   0 );
@@ -216,18 +276,26 @@ int main(int argc, char* argv[]) {
   fit_result.SetTextSize ( 0.03 );
   fit_result.SetTextColor(    1 );
   fit_result.SetTextFont (   42 );
+
   {
     string appo1, appo2;
-    std::stringstream ss1, ss2;
-    ss1 << std::fixed << std::setprecision(1) << chi2;
-    appo1 = ss1.str();
-    ss2 << std::fixed << std::setprecision(3) << pvalue;
-    appo2 = ss2.str();
+    if (chi2 != chi2) {
+      appo1 = "nan";
+    }
+    if (pvalue != pvalue) {
+      appo2 = "nan";
+    }
+    if (chi2 == chi2 && pvalue == pvalue) {
+      std::stringstream ss1, ss2;
+      ss1 << std::fixed << std::setprecision(1) << chi2;
+      appo1 = ss1.str();
+      ss2 << std::fixed << std::setprecision(3) << pvalue;
+      appo2 = ss2.str();
+    }
     fit_result.AddText(("#chi^{2}/ndof = " + appo1 + "/" + std::to_string(ndof)).c_str());
     fit_result.AddText(("p-value: " + appo2).c_str());
     fit_result.Draw();
   }
-  
   
   c1->Update();
   if (print) {
