@@ -22,6 +22,7 @@
 #include "TCanvas.h"
 #include "TGraphErrors.h"
 #include "TVectorF.h"
+#include "TFitResult.h"
 
 #include "tdrstyle.C"
 #include "Analysis/Tools/interface/HbbStylesNew.h"
@@ -35,6 +36,9 @@ Double_t super_novosibirsk(Double_t x, Double_t p0, Double_t p1, Double_t p2, Do
   Double_t sigma02 = TMath::Power(sigma0, 2);
   first = 0.5*(TMath::Erf(p0*(x - p1)) + 1);
   inside = 1 - (x - p3)*p5/p4 - TMath::Power(x - p3, 2)*p5*p6/p4;
+  // std::cout << "1 - (" << x << " - " << p3 << ")*" << p5 << "/" << p4;
+  // std::cout <<  " - (" << x << " - " << p3 << ")**2*" << p5 << "*" << p6;
+  // std::cout << "/" << p4 << " = " << inside << std::endl;
   second = TMath::Exp(-0.5/sigma02*TMath::Power(TMath::Log(inside), 2) - \
                       0.5*sigma02);
   return p2*first*second;
@@ -234,7 +238,9 @@ int main(int argc, char* argv[]) {
   if (use_integral) {
     fit_options += string("I");
   }
-  data_histo.Fit(&super_novosibirsk, fit_options.c_str(), "", minx, maxx);  
+  TFitResultPtr fit_success = data_histo.Fit(&super_novosibirsk, fit_options.c_str(), "", minx, maxx);
+  bool success = fit_success->IsValid();
+  
   if (!print_initial) {
     super_novosibirsk.SetFillColor(kRed);
     super_novosibirsk.DrawClone("same");
@@ -261,7 +267,13 @@ int main(int argc, char* argv[]) {
   Double_t chi2 = 0;
   for (Int_t i = 1; i < data_histo.GetNbinsX(); i++) {
     Double_t x = data_histo.GetBinCenter(i);
-    Double_t exp_value = super_novosibirsk.Integral(x - binning/2, x + binning/2)/binning;
+    Double_t exp_value;
+    if (success) {
+      exp_value = super_novosibirsk.Integral(x - binning/2, x + binning/2)/binning;
+    } else {
+      // exp_value = 1;
+      exp_value = super_novosibirsk.Integral(x - binning/2, x + binning/2)/binning;
+    }
     Double_t divisor = TMath::Sqrt(exp_value);
     Double_t y = (data_histo.GetBinContent(i) - exp_value)/divisor;
     
