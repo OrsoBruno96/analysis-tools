@@ -219,7 +219,7 @@ int main(int argc, char* argv[]) {
   string limit_string = "(Mass > " + std::to_string(minx) + ") && (Mass < " + \
     std::to_string(maxx) + ")";
   chain.Draw("Mass>>data_histo",
-             (filter_string + string(" && ") + limit_string).c_str(),
+             ("Weigth*(" + filter_string + string(" && ") + limit_string + ")").c_str(),
              "");
 
   for (UInt_t i = 0; i < init_pars.size(); i++) {
