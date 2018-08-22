@@ -1,7 +1,8 @@
 #!/usr/bin/env python2.7
 # -*- coding:utf-8 -*-
 
-from settings_parallelization import correction_level_signal, open_and_create_dir
+from settings_parallelization import correction_level_signal, open_and_create_dir, \
+    name_of_lep
 from os.path import join as ojoin
 from os import chmod
 
@@ -27,29 +28,37 @@ mass_points = {
     },
 }
 
+lep = [True, False]
 
 for c in correction_level_signal:
     c = "_".join(c)
     for m, params in mass_points.iteritems():
-        input_filename = ojoin(directory_mc, "_".join([m, c]) + ".root")
-        out_basename = "_".join(["fit", "mc", m, c])
-        out_basename = ojoin(output_directory, out_basename)
-        out_pars_file = open_and_create_dir(params['pars_filename'])
-        for f in params['pars']:
-            out_pars_file.write(str(f) + "\n")
-        out_pars_file.close()
-        command = [
-            "FitBackground",
-            "--input", input_filename,
-            "--output", out_basename + ".txt",
-            "--print", out_basename + ".png",
-            "--min-x", str(params["min"]),
-            "--max-x", str(params["max"]),
-            "--bins", str(params["bins"]),
-            "--initial-pars", params['pars_filename'],
-            "--model", "bukin",
-        ]
-        script_file.write(" ".join(command) + "\n")
+        for l in lep:
+            input_filename = ojoin(directory_mc, "_".join([m, c]) + ".root")
+            out_basename = "_".join(["fit", "mc", m, c, name_of_lep(l)])
+            out_basename = ojoin(output_directory, out_basename)
+            out_pars_file = open_and_create_dir(params['pars_filename'])
+            print(params['pars_filename'])
+            for f in params['pars']:
+                out_pars_file.write(str(f) + "\n")
+            out_pars_file.close()
+            if l:
+                extra = list()
+            else:
+                extra = ["--full-hadronic", ]
+            command = [
+                "FitBackground",
+                "--input", input_filename,
+                "--output", out_basename + ".txt",
+                "--print", out_basename + ".png",
+                "--min-x", str(params["min"]),
+                "--max-x", str(params["max"]),
+                "--bins", str(params["bins"]),
+                "--initial-pars", params['pars_filename'],
+            ] + extra + [
+                "--model", "bukin",
+            ]
+            script_file.write(" ".join(command) + "\n")
 script_file.close()
 chmod(script_filename, 0755)
 
