@@ -56,7 +56,8 @@
 #include "TROOT.h"
 
 #include "tdrstyle.C"
-#include "HbbStylesNew.cc"
+#include "Analysis/Tools/interface/HbbStylesNew.h"
+
 
 const Float_t lumi = 2.;
 

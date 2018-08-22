@@ -11,7 +11,7 @@
 #include "TLegend.h"
 
 #include "tdrstyle.C"
-#include "HbbStylesNew.cc"
+#include "Analysis/Tools/interface/HbbStylesNew.h"
 
 Float_t lumi = -1.;
 

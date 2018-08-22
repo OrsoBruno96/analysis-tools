@@ -63,7 +63,7 @@
 #include "TGaxis.h"
 
 #include "tdrstyle.C"
-#include "HbbStylesNew.cc"
+#include "Analysis/Tools/interface/HbbStylesNew.h"
 
 
 

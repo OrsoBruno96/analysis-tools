@@ -14,14 +14,16 @@
 
 #include "TChain.h"
 #include "TH1F.h"
+#include "TCanvas.h"
 #include "RooRealVar.h"
 #include "RooDataHist.h"
 #include "RooArgList.h"
 #include "RooWorkspace.h"
 #include "RooPlot.h"
 
-// #include "tdrstyle.C"
-#include "HbbStylesNew.cc"
+#include "tdrstyle.C"
+#include "Analysis/Tools/interface/HbbStylesNew.h"
+
 #include "Analysis/Tools/interface/super_novosibirsk.h"
 
 

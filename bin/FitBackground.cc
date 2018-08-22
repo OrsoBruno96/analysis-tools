@@ -24,7 +24,7 @@
 #include "TVectorF.h"
 
 #include "tdrstyle.C"
-#include "HbbStylesNew.cc"
+#include "Analysis/Tools/interface/HbbStylesNew.h"
 
 
 namespace bkg_model_fit {
