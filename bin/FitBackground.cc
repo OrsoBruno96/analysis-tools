@@ -218,9 +218,6 @@ int main(int argc, char* argv[]) {
              "");
 
   for (UInt_t i = 0; i < init_pars.size(); i++) {
-    if (i == 6) {
-      init_pars[i] *= -1;
-    }
     super_novosibirsk.SetParameter(i, init_pars[i]);
   }
   TF1 clone(super_novosibirsk);
