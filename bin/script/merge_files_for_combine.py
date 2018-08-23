@@ -8,7 +8,7 @@ from ROOT import RooRealVar, RooDataHist, RooWorkspace, RooArgList, RooHistPdf, 
 from ROOT.RooFit import Import
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
-    name_of_lep, open_and_create_dir, mkdir_p
+    name_of_lep, open_and_create_dir, mkdir_p, get_signal_cl_from_bkg
 from os.path import join as ojoin
 from os import chmod
 
@@ -62,7 +62,8 @@ workspaces = [RooWorkspace("w") for i in mass_points for c in correction_level_b
 i = 0
 
 for mass in mass_points:
-    for cb, cs in zip(correction_level_bkg, correction_level_signal):
+    for cb in correction_level_bkg:
+        cs = get_signal_cl_from_bkg(cb)
         cb = "_".join(cb)
         cs = "_".join(cs)
         for l in lep:
@@ -81,6 +82,7 @@ for mass in mass_points:
             for e in eras:
                 appo_sig.Add(ojoin(directory_sig, "_".join(["sig", e, cb]) + ".root"))
             appo_bkg.Add(ojoin(directory_splitted_bkg, "_".join([cb, "2"]) + ".root"))
+            print(cs)
             appo_mc.Add(ojoin(directory_mc, "_".join([mass, cs]) + ".root"))
             output_file = TFile(ojoin(
                 out_dir, "_".join(["combine", output_file_name_appo, mass, cb]) + ".root"), "recreate")

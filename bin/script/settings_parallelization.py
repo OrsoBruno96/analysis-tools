@@ -122,3 +122,19 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+def get_signal_cl_from_bkg(bkg_cl):
+     appo = bkg_cl[1]
+     cusu = bkg_cl[0]
+     if cusu == "nothing":
+          ret = "smearing_btag"
+     elif cusu == "fsr":
+          ret = "smearing_btag_fsr"
+     elif cusu == "regression":
+          ret = "smearing_btag_regression"
+     elif cusu == "regression_fsr":
+          ret = "smearing_btag_regression_fsr"
+     return (ret, appo)
+
+     
