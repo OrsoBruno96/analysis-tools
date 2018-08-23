@@ -224,7 +224,7 @@ int main(int argc, char* argv[]) {
     std::to_string(maxx) + ")";
   chain.Draw("Mass>>data_histo",
              ("Weigth*(" + filter_string + string(" && ") + limit_string + ")").c_str(),
-             "");
+             "E");
 
   for (UInt_t i = 0; i < init_pars.size(); i++) {
     super_novosibirsk.SetParameter(i, init_pars[i]);
