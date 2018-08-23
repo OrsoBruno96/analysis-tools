@@ -3,6 +3,9 @@
 
 from ROOT import TH1F, TFile, TChain
 from jinja2 import FileSystemLoader, Environment
+from ROOT import RooRealVar, RooDataHist, RooWorkspace, RooArgList, RooHistPdf, \
+    RooArgSet
+from ROOT.RooFit import Import
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
     name_of_lep, open_and_create_dir, mkdir_p
@@ -19,9 +22,9 @@ mass_points = ["120", "350", "1200"]
 lumi = 35.6
 
 limits = {
-    "120": (80, 1000, 60),
-    "350": (100, 1000, 120),
-    "1200": (100, 2000, 90),
+    "120": (99., 600, 60),
+    "350": (99., 600, 120),
+    "1200": (99., 1200, 90),
 }
 
 scale_factor_MC = lumi/1000
@@ -54,6 +57,10 @@ else:
     template = template_env.get_template("datacard.j2")
 template_script = template_env.get_template("combine_script.j2")
 
+
+workspaces = [RooWorkspace("w") for i in mass_points for c in correction_level_bkg for l in lep] 
+i = 0
+
 for mass in mass_points:
     for cb, cs in zip(correction_level_bkg, correction_level_signal):
         cb = "_".join(cb)
@@ -80,6 +87,16 @@ for mass in mass_points:
             output_file.cd()
             histo_bkg = TH1F("bbnb_Mbb", "bbnb Mbb", limit[2], limit[0], limit[1])
             histo_mc = TH1F("MC_bbb_Mbb", "bbb Mbb MC", limit[2], limit[0], limit[1])
+
+            w = workspaces[i]
+            Mass = RooRealVar("Mass", "Mass", 0, 1600)
+            roohisto_mc = RooDataHist(
+                "Roo_MC_bbb_Mbb", "Roo_MC_bbb_Mbb", RooArgList(Mass), Import(histo_mc))
+            roohistopdf_mc = RooHistPdf(
+                "Roo_MC_bbb_Mbb", "Roo_MC_bbb_Mbb", RooArgSet(Mass), roohisto_mc)
+            getattr(w, 'import')(roohisto_mc)
+            getattr(w, 'import')(roohistopdf_mc)
+            
             histo_sig = TH1F("sig_bbb_Mbb", "bbb Mbb", limit[2], limit[0], limit[1])
             appo_bkg.Draw("Mass>>bbnb_Mbb", " && ".join([filter_string, limit_string]), "goff")
             appo_mc.Draw("Mass>>MC_bbb_Mbb", "Weigth*" + " && ".join([filter_string,
@@ -90,6 +107,8 @@ for mass in mass_points:
             histo_bkg.Write()
             histo_mc.Write()
             histo_sig.Write()
+            w.Write()
+            output_file.Close()
 
             output_filename = ojoin(out_dir, "datacards")
             output_filename = ojoin(output_filename,
@@ -108,13 +127,13 @@ for mass in mass_points:
                     obs=bkg_events,
                     file_name=ojoin(
                         out_dir, "_".join(["combine", output_file_name_appo, mass, cb]) + ".root"))
-            output_file = open(output_filename, "w")
+            output_file = open_and_create_dir(output_filename)
             output_file.write(out_text)
             list_of_datacards.append({'mass': mass, 'file': output_filename,
                                       'correction': cb, 'lep': output_file_name_appo})
+            i += 1
 
-
-
+            
 list_of_directories = [ojoin(
     ojoin(
         ojoin(out_dir, "out"),
