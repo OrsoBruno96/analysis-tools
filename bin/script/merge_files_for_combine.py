@@ -5,7 +5,7 @@ from ROOT import TH1F, TFile, TChain
 from jinja2 import FileSystemLoader, Environment
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
-    name_of_lep, open_and_create_dir
+    name_of_lep, open_and_create_dir, mkdir_p
 from os.path import join as ojoin
 from os import chmod
 
@@ -40,6 +40,7 @@ else:
     sssspecific_dir = "template"
 out_dir = ojoin(base_directory, ojoin(
     ojoin("combine_tool", sssspecific_dir), specific_directory))
+mkdir_p(out_dir)
 output_script_filedir = "../_tmp/script"
 
 
@@ -126,7 +127,7 @@ out_text = template_script.render(
     corrections=["_".join(c) for c in correction_level_bkg],
     directories=list_of_directories)
 out_filename = ojoin(output_script_filedir, "run_combine_all.sh")
-out_file = open(out_filename, "w")
+out_file = open_and_create_dir(out_filename)
 out_file.write(out_text)
 chmod(out_filename, 0755)
 

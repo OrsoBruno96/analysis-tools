@@ -3,7 +3,7 @@
 
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
-    mass_points_signal, bkg_files, split_list
+    mass_points_signal, bkg_files, split_list, mkdir_p
 from subprocess import Popen, STDOUT, PIPE
 from time import sleep
 from jinja2 import FileSystemLoader, Environment
@@ -73,6 +73,7 @@ def fill_list(type_of, output_dir):
     
 if sys.argv[1] == "bkg" and len(sys.argv) == 2:
     output_dir = os.path.join(base_out_dir, "raw_files/bkg/no_reranking/medium_wp")
+    mkdir_p(output_dir)
     proc = Popen([fill_list("bkg", output_dir), ], stdout=PIPE)
     print(proc.stdout.read())
     proc.wait()
@@ -93,6 +94,7 @@ elif sys.argv[1] == "bkg" and sys.argv[2] is not None and sys.argv[2] == "merge"
             
 elif sys.argv[1] == "mc":
     output_dir = os.path.join(base_out_dir, "raw_files/MC/no_reranking/medium_wp")
+    mkdir_p(output_dir)
     for params in mass_points_signal:
         for cl in correction_level_signal:
             executable = "_".join(["mc", cl[0], cl[1]])
@@ -116,6 +118,7 @@ elif sys.argv[1] == "mc":
 
 elif sys.argv[1] == 'sig' and len(sys.argv) == 2:
     output_dir = os.path.join(base_out_dir, "raw_files/signal/no_reranking/medium_wp")
+    mkdir_p(output_dir)
     proc = Popen([fill_list("sig", output_dir), ], stdout=PIPE)
     print(proc.stdout.read())
     proc.wait()
