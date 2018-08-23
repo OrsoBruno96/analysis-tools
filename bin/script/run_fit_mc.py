@@ -15,7 +15,8 @@ script_filename = "../_tmp/script/run_fits_mc.sh"
 script_file = open(script_filename, "w")
 
 
-pars_bukin = [350, 310., 60., 0.01, 0.01, -0.2]
+pars_bukin_350 = [350, 310., 60., 0.01, 0.01, -0.2]
+pars_bukin_1200 = [80, 1100, 300, 0.01, 0.01, 0.01]
 
 mass_points = {
     "350": {
@@ -23,9 +24,17 @@ mass_points = {
         'max': 550,
         'bins': 60,
         'pars_filename': "../_tmp/fit/init_pars_bukin_350.txt",
-        'pars': pars_bukin,
+        'pars': pars_bukin_350,
         'function': "bukin"
     },
+    "1200": {
+        'min': 100,
+        'max': 1400,
+        'bins': 60,
+        'pars_filename': "../_tmp/fit/init_pars_bukin_1200.txt",
+        'pars': [80, 1100, 300, 0.01, 0.01, 0.01, 400, 50],
+        'function': "bukin_modified"
+    }
 }
 
 lep = [True, False]
@@ -49,13 +58,13 @@ for c in correction_level_signal:
                 "FitBackground",
                 "--input", input_filename,
                 "--output", out_basename + ".txt",
-                "--print", out_basename + ".png",
+                "--print", out_basename + ".pdf",
                 "--min-x", str(params["min"]),
                 "--max-x", str(params["max"]),
                 "--bins", str(params["bins"]),
                 "--initial-pars", params['pars_filename'],
             ] + extra + [
-                "--model", "bukin",
+                "--model", params['function'],
             ]
             script_file.write(" ".join(command) + "\n")
 script_file.close()
