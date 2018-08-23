@@ -136,46 +136,35 @@ int main(int argc, char* argv[]) {
   bpo::options_description cmdline_options("Command line options");
   cmdline_options.add_options()
     ("help,h", "Produce help messag")
-    ("output,o", bpo::value<string>(), "Set output directory")
-    ("correction,c", bpo::value<string>(), "Set type of correction level to process")
-    ("input,i", bpo::value<string>(), "Set input directory")
-    ("prescale,p", bpo::value<Int_t>(), "Set prescale")
+    ("output-dir,o", bpo::value<string>()->required(), "Set output directory")
+    ("output-name", bpo::value<string>()->required(), "Set output template name")
+    ("input,i", bpo::value<vector<string>>()->required()->multitoken(), "Set input directory")
+    ("prescale,p", bpo::value<Int_t>()->required(), "Set prescale")
     ;
   bpo::variables_map vm;
   bpo::store(bpo::parse_command_line(argc, argv, cmdline_options), vm);
   if (vm.count("help")) {
     cout << cmdline_options << endl;
   }
-  if (vm.count("input") != 1) {
-    cerr << "Please specify input directory" << endl;
-    return -1;
-  }
-  if (vm.count("output") != 1) {
-    cerr << "Please specify output directory" << endl;
-    return -2;
-  }
-  if (vm.count("prescale") != 1) {
-    cerr << "Please specify prescale" << endl;
-  }
-  if (vm.count("correction") != 1) {
-    cerr << "Please specify correction" << endl;
-  }
 
   Int_t prescale = vm["prescale"].as<Int_t>();
-  string input_dir = vm["input"].as<string>();
-  string output_dir = vm["output"].as<string>();
-  string correction = vm["correction"].as<string>();
+  vector<string> input_files = vm["input"].as<vector<string>>();
+  string output_dir = vm["output-dir"].as<string>();
+  string output_filename = vm["output-name"].as<string>();
   
   vector<TFile*> out_files(prescale);
   vector<TTree*> out_trees(prescale);
   TChain old_tree("output_tree");
+
+  for (auto it: input_files) {
+    old_tree.Add(it.c_str());
+  }
   
-  old_tree.Add((input_dir + string("/bkg_*_") + correction + string(".root")).c_str());
   SetTreeBranches(&old_tree);
   int counter = 0;
   for (Int_t i = 0; i < prescale; i++) {
-    out_files[i] = new TFile((output_dir + string("/") + correction + \
-                              string("_") + std::to_string(counter) + \
+    out_files[i] = new TFile((output_dir + string("/") + output_filename +
+                              string("_") + std::to_string(counter) +   \
                               string(".root")).c_str(), "recreate");
     out_trees[i] = old_tree.CloneTree(0);
     counter++;
