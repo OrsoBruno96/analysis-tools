@@ -5,6 +5,7 @@ from ROOT import TH1F, TFile, TMath, TF1, TH1F, TCanvas, TGraph, TChain
 from ROOT import RooRealVar, RooGenericPdf, RooArgSet, RooArgList, RooDataSet, RooAbsPdf, \
     RooWorkspace, RooDataHist
 from ROOT.RooFit import bindFunction, Binning, Import
+from os.path import join as ojoin
 
 from hbbstyle import create_style, init_hist, CMS_prelim
 
@@ -25,8 +26,9 @@ bbins = [
 
 
 base_dir = "/nfs/dust/cms/user/zorattif/output"
-input_dir_bkg = os.path.join(base_dir, "raw_files/bkg/no_reranking/medium_wp")
-output_dir_fitted = os.path.join(base_dir, "fit/bkg/no_reranking/medium_wp")
+specific_directory = "fourth_jet_veto/medium_wp"
+input_dir_bkg = ojoin(base_dir, ojoin("raw_files/bkg", specific_directory))
+output_dir_fitted = ojoin(base_dir, ojoin("fit/bkg", specific_directory))
 
 def prendi_parametri(funzione):
     params = list()
@@ -136,7 +138,7 @@ for c, init, frame, frame2, w, canv, canv2 in zip(
     canv.cd()
     ch = TChain("output_tree")
     for e in eras:
-        ch.Add(os.path.join(input_dir_bkg, "_".join(["bkg", e, c]) + ".root"))
+        ch.Add(ojoin(input_dir_bkg, "_".join(["bkg", e, c]) + ".root"))
     tree = ch.CopyTree("Leptonic_event")
     p0 = RooRealVar("p0", "p0", 0, 0.007)
     p1 = RooRealVar("p1", "p1", 1400, 2200)
@@ -176,27 +178,27 @@ for c, init, frame, frame2, w, canv, canv2 in zip(
     # as a python builtin.
     hresid = frame.pullHist()
 
-    x = ROOT.Double(0)
-    y = ROOT.Double(0)
-    chi2 = 0
-    nbins = 0
-    curve = super_novosibirsk
-    for i in range(0, hresid.GetN()):
-	hresid.GetPoint(i, x, y)
-	eyl = hresid.GetEYlow()[i] 
-	eyh = hresid.GetEYhigh()[i] 
-	exl = hresid.GetEXlow()[i] 
-	exh = hresid.GetEXhigh()[i] 
-	# curve_yavg = curve.average(x-exl,x+exh)
-        Mass.setVal(x)
-        curven_yavg = curve.evaluate()
-	pull = 0.
-	if (y != 0):
-	    pull = ((y - curve_yavg)/eyl) if (y > curve_yavg) else ((y - curve_yavg)/eyh)
-	    chi2 += pull*pull
-	    nbins += 1
-    chimerda = Chi2Ndf(chi2, nbins - 6)
-    print(chimerda)
+    # x = ROOT.Double(0)
+    # y = ROOT.Double(0)
+    # chi2 = 0
+    # nbins = 0
+    # curve = super_novosibirsk
+    # for i in range(0, hresid.GetN()):
+    #     hresid.GetPoint(i, x, y)
+    #     eyl = hresid.GetEYlow()[i] 
+    #     eyh = hresid.GetEYhigh()[i] 
+    #     exl = hresid.GetEXlow()[i] 
+    #     exh = hresid.GetEXhigh()[i] 
+    #     # curve_yavg = curve.average(x-exl,x+exh)
+    #     Mass.setVal(x)
+    #     curven_yavg = curve.evaluate()
+    #     pull = 0.
+    #     if (y != 0):
+    #         pull = ((y - curve_yavg)/eyl) if (y > curve_yavg) else ((y - curve_yavg)/eyh)
+    #         chi2 += pull*pull
+    #         nbins += 1
+    # chimerda = Chi2Ndf(chi2, nbins - 6)
+    # print(chimerda)
 
 
 
@@ -204,7 +206,7 @@ for c, init, frame, frame2, w, canv, canv2 in zip(
     getattr(w, 'import')(super_novosibirsk)
     # w.Print()
     output_filename = c
-    output_filename = os.path.join(output_dir_fitted, c + ".root")
+    output_filename = ojoin(output_dir_fitted, c + ".root")
     w.writeToFile(output_filename, True)
     # print(chiQuadro(frame, "super_novosibirsk", c, 6))
     frame.Draw()
@@ -213,6 +215,6 @@ for c, init, frame, frame2, w, canv, canv2 in zip(
     frame2.Draw()
     print("Real chi2: " + str(frame.chiSquare()))
     print("Cancro")
-    input("Fermati")
+    # input("Fermati")
 
 input("asd")
