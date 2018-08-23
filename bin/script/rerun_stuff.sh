@@ -2,18 +2,21 @@
 # -*- coding:utf-8 -*-
 
 BASE_DIR="/nfs/dust/cms/user/zorattif/output/raw_files"
-SPECIFIC_DIR="jets_3_FSR_pt_20_deltar_08/medium_wp"
+SPECIFIC_DIR="distribution_jets_3_FSR_pt_60_deltar_08/medium_wp"
 
 CASES=(bkg signal)
 TRIG=(true false)
+SCRIPTS_DIR="${HOME}/workdir/bin/_tmp"
+NEW_SCRIPT_DIR="${HOME}/workdir/bin"
 
+COMMANDS=()
 
 for c in ${CASES[@]} ; do
     if [[ $c == "bkg" ]] ; then
-        SCRIPT_FILENAME="_tmp/run_condorbkg.sh"
+        SCRIPT_FILENAME="${SCRIPTS_DIR}/run_condorbkg.sh"
         LIMIT_STRING="bkg"
     else
-        SCRIPT_FILENAME="_tmp/run_condorsig.sh"
+        SCRIPT_FILENAME="${SCRIPTS_DIR}/run_condorsig.sh"
         LIMIT_STRING="sig"
     fi
     cd ${BASE_DIR}/${c}/${SPECIFIC_DIR}
@@ -27,8 +30,9 @@ for c in ${CASES[@]} ; do
                     name="${name##*${LIMIT_STRING}_}"
                     era="${name:0:1}"
                     corr=$(echo $name | cut -c 3-)
-                    COMMAND="cat $SCRIPT_FILENAME | grep $era | grep $corr | bash"
-                    echo $COMMAND
+                    cd ${NEW_SCRIPT_DIR}
+                    cat $SCRIPT_FILENAME | grep $era | grep $corr | bash
+                    cd ${BASE_DIR}/${c}/${SPECIFIC_DIR}
                 fi
             done
     done
