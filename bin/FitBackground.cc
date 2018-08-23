@@ -76,6 +76,17 @@ Double_t bukin(Double_t x, Double_t Ap, Double_t Xp, Double_t sp, Double_t rho1,
   return Ap*TMath::Exp(interno);
 }
 
+
+  /**
+   * Bukin function with exponential raise on the left.
+   */
+  Double_t modified_bukin(Double_t x, Double_t Ap, Double_t Xp, Double_t sp, Double_t rho1, Double_t rho2, Double_t xi, Double_t Xt, Double_t tau) {
+    if (x < Xt) {
+      return TMath::Exp(x/tau)*bukin(Xt, Ap, Xp, sp, rho1, rho2, xi)/TMath::Exp(Xt/tau);
+    } else {
+      return bukin(x, Ap, Xp, sp, rho1, rho2, xi);
+    }
+  }
   
 }
 
@@ -152,6 +163,12 @@ int main(int argc, char* argv[]) {
                                   p[3], p[4], p[5]);
     };
     npars = 6;
+  } else if (model_name == "bukin_modified") {
+    model = [&](double* x, double* p) {
+      return bkg_model_fit::modified_bukin(x[0], p[0],
+         p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+    };
+    npars = 8;
   } else {
     cerr << "No available model with the name given." << endl;
     return -7;
