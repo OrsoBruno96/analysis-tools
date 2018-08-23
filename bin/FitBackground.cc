@@ -49,8 +49,8 @@ Double_t super_novosibirsk(Double_t x, Double_t p0, Double_t p1, Double_t p2, Do
 Double_t bukin(Double_t x, Double_t Ap, Double_t Xp, Double_t sp, Double_t rho1, Double_t rho2, Double_t xi) {
   const Double_t sqr2log2 = TMath::Sqrt(2*TMath::Log(2));
   const Double_t log2 = TMath::Log(2);
-  Double_t x1 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi + 1) - 1);
-  Double_t x2 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi + 1) + 1);
+  Double_t x1 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi*xi + 1) - 1);
+  Double_t x2 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi*xi + 1) + 1);
 
   Double_t interno = 0;
   
