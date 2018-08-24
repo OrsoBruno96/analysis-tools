@@ -110,13 +110,8 @@ int main(int argc, char* argv[]) {
     vector<RooRealVar*> variables( {p0, p1, p3, p4, p5, p6} );
     for (unsigned int i = 0; i < init_pars.size(); i++) {
       variables[i]->setVal(init_pars[i]);
+      variables_to_delete.push_back(variables[i]);
     }
-    variables_to_delete.push_back(p0);
-    variables_to_delete.push_back(p1);
-    variables_to_delete.push_back(p3);
-    variables_to_delete.push_back(p4);
-    variables_to_delete.push_back(p5);
-    variables_to_delete.push_back(p6);
     npars = 6;
   } else if (model_name == "bukin") {
     RooRealVar* p1 = new RooRealVar("Xp", "Xp", 10, 500);
