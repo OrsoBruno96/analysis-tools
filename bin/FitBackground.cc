@@ -23,9 +23,18 @@
 #include "TGraphErrors.h"
 #include "TVectorF.h"
 #include "TFitResult.h"
+#include "TFile.h"
+
+#include "RooRealVar.h"
+#include "RooDataHist.h"
+#include "RooArgList.h"
+#include "RooWorkspace.h"
+#include "RooPlot.h"
+
 
 #include "tdrstyle.C"
 #include "Analysis/Tools/interface/HbbStylesNew.h"
+#include "Analysis/Tools/src/classes.h"
 
 
 namespace bkg_model_fit {
@@ -148,13 +157,38 @@ int main(int argc, char* argv[]) {
   }
   std::function<Double_t(Double_t* x, Double_t* p)> model;
   string model_name(vm["model"].as<string>());
+  Float_t minx = vm["min-x"].as<Float_t>();
+  Float_t maxx = vm["max-x"].as<Float_t>();
+  UInt_t bins = vm["bins"].as<UInt_t>();
+  string filename_pars = vm["initial-pars"].as<string>();
+
   UInt_t npars = 0;
+  
+  
+  RooAbsPdf* pdf = nullptr;
+  vector<RooRealVar*> variables_to_delete;
+  RooRealVar Mass("Mass", "Mass", minx, maxx);
+  
   if (model_name == "super_novosibirsk") {
     model = [&](double* x, double* p) {
       return bkg_model_fit::super_novosibirsk(x[0], p[0],
                                               p[1], p[2],
                                               p[3], p[4], p[5], p[6]);
     };
+
+    RooRealVar* p0 = new RooRealVar("p0", "p0", 0, 0.007);
+    RooRealVar* p1 = new RooRealVar("p1", "p1", 1400, 2200);
+    RooRealVar* p3 = new RooRealVar("p3", "p3", 10, 100);
+    RooRealVar* p4 = new RooRealVar("p4", "p4", 10, 100);
+    RooRealVar* p5 = new RooRealVar("p5", "p5", 0, 10);
+    RooRealVar* p6 = new RooRealVar("p6", "p6", -0.3, -0.0001);
+    pdf = new super_novosibirsk("super_novosibirsk", "super_novosibirsk",
+                                Mass, *p0, *p1, *p3, *p4, *p5, *p6);
+    vector<RooRealVar*> appo( {p0, p1, p3, p4, p5, p6} );
+    for (auto it: appo) {
+      variables_to_delete.push_back(it);
+    }
+    
     npars = 7;
   } else if (model_name == "bukin") {
     model = [&](double* x, double* p) {
@@ -188,10 +222,6 @@ int main(int argc, char* argv[]) {
   if (print) {
     print_file = vm["print"].as<vector<string>>();
   }
-  Float_t minx = vm["min-x"].as<Float_t>();
-  Float_t maxx = vm["max-x"].as<Float_t>();
-  UInt_t bins = vm["bins"].as<UInt_t>();
-  string filename_pars = vm["initial-pars"].as<string>();
   // vector<Float_t> init_pars( {0.001, 1862, 240559, 43, 62, 1, -0.008} );
   vector<Float_t> init_pars;
   std::ifstream infile(filename_pars.c_str());
@@ -233,7 +263,7 @@ int main(int argc, char* argv[]) {
   for (auto it: input_files) {
     chain.Add(it.c_str());
   }
-  TF1 super_novosibirsk("super_novosibirsk", model, minx, maxx, npars);
+  TF1 model_tf1("model_tf1", model, minx, maxx, npars);
   TH1F data_histo("data_histo", "data_histo", bins, minx, maxx);
   style.InitHist(&data_histo, "M_{12} [GeV]", (string("Events / ") + binnumber + string(" GeV")).c_str());
   data_histo.SetTitle("Background");
@@ -244,9 +274,9 @@ int main(int argc, char* argv[]) {
              "E");
 
   for (UInt_t i = 0; i < init_pars.size(); i++) {
-    super_novosibirsk.SetParameter(i, init_pars[i]);
+    model_tf1.SetParameter(i, init_pars[i]);
   }
-  TF1 clone(super_novosibirsk);
+  TF1 clone(model_tf1);
   if (print_initial) {
     clone.SetFillColor(kBlue);
     clone.DrawCopy("same");
@@ -255,12 +285,23 @@ int main(int argc, char* argv[]) {
   if (use_integral) {
     fit_options += string("I");
   }
-  TFitResultPtr fit_success = data_histo.Fit(&super_novosibirsk, fit_options.c_str(), "", minx, maxx);
+  TFitResultPtr fit_success = data_histo.Fit(&model_tf1, fit_options.c_str(), "", minx, maxx);
   bool success = fit_success->IsValid();
+
+  if (model_name == "super_novosibirsk") {
+    variables_to_delete[0]->setVal(fit_success.Get()->GetParams()[0]);
+    variables_to_delete[1]->setVal(fit_success.Get()->GetParams()[1]);
+    variables_to_delete[2]->setVal(fit_success.Get()->GetParams()[3]);
+    variables_to_delete[3]->setVal(fit_success.Get()->GetParams()[4]);
+    variables_to_delete[4]->setVal(fit_success.Get()->GetParams()[5]);
+    variables_to_delete[5]->setVal(fit_success.Get()->GetParams()[6]);
+  } else {
+    cerr << "Not implemented" << endl;
+  }
   
   if (!print_initial) {
-    super_novosibirsk.SetFillColor(kRed);
-    super_novosibirsk.DrawClone("same");
+    model_tf1.SetFillColor(kRed);
+    model_tf1.DrawClone("same");
   }
 
   string appo;
@@ -286,10 +327,10 @@ int main(int argc, char* argv[]) {
     Double_t x = data_histo.GetBinCenter(i);
     Double_t exp_value;
     if (success) {
-      exp_value = super_novosibirsk.Integral(x - binning/2, x + binning/2)/binning;
+      exp_value = model_tf1.Integral(x - binning/2, x + binning/2)/binning;
     } else {
       // exp_value = 1;
-      exp_value = super_novosibirsk.Integral(x - binning/2, x + binning/2)/binning;
+      exp_value = model_tf1.Integral(x - binning/2, x + binning/2)/binning;
     }
     Double_t divisor = TMath::Sqrt(exp_value);
     Double_t y = (data_histo.GetBinContent(i) - exp_value)/divisor;
@@ -341,6 +382,12 @@ int main(int argc, char* argv[]) {
     fit_result.AddText(("p-value: " + appo2).c_str());
     fit_result.Draw();
   }
+
+
+  TFile output_file_(output_file.c_str(), "recreate");
+  RooWorkspace w("w");
+  w.import(*pdf);
+  w.Write();
   
   c1->Update();
   if (print) {
@@ -349,5 +396,11 @@ int main(int argc, char* argv[]) {
     }
   }
 
+
+  for (auto it: variables_to_delete) {
+    delete it;
+    it = nullptr;
+  }
+  delete pdf;
   return 0;
 }
