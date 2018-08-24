@@ -7,7 +7,7 @@ from os import chmod
 from os.path import join as ojoin
 
 base_directory = "/nfs/dust/cms/user/zorattif/output"
-specific_directory = "fourth_jet_veto/medium_wp"
+specific_directory = "distribution_corrections_before_jets_3_FSR_pt_20_deltar_08/medium_wp"
 
 directory_bkg = ojoin(base_directory, ojoin("raw_files/bkg" , specific_directory))
 directory_splitted_bkg = ojoin(base_directory, ojoin("split/bkg", specific_directory))
@@ -39,5 +39,5 @@ for c in commands:
     
 script_file.close()
 chmod(script_filename, 0755)
-
-    
+print("Now please run")
+print(script_filename)
