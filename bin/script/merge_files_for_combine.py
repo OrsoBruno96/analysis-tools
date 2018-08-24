@@ -8,7 +8,8 @@ from ROOT import RooRealVar, RooDataHist, RooWorkspace, RooArgList, RooHistPdf, 
 from ROOT.RooFit import Import
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
-    name_of_lep, open_and_create_dir, mkdir_p, get_signal_cl_from_bkg
+    name_of_lep, open_and_create_dir, mkdir_p, get_signal_cl_from_bkg, tmp_dir, \
+    condor_submit, condor_script_executable
 from os.path import join as ojoin
 from os import chmod
 
@@ -30,7 +31,7 @@ limits = {
 scale_factor_MC = lumi/1000
 
 base_directory = "/nfs/dust/cms/user/zorattif/output"
-specific_directory = "no_reranking/medium_wp"
+specific_directory = "fourth_jet_veto/medium_wp"
 
 directory_bkg = ojoin(base_directory, ojoin("raw_files/bkg" , specific_directory))
 directory_splitted_bkg = ojoin(base_directory, ojoin("split/bkg", specific_directory))
@@ -44,7 +45,7 @@ else:
 out_dir = ojoin(base_directory, ojoin(
     ojoin("combine_tool", sssspecific_dir), specific_directory))
 mkdir_p(out_dir)
-output_script_filedir = "../_tmp/script"
+output_script_filedir = ojoin(tmp_dir, "script")
 
 
 
@@ -140,6 +141,30 @@ list_of_directories = [ojoin(
     ojoin(
         ojoin(out_dir, "out"),
         name_of_lep(l)), "_".join(c)) for c in correction_level_bkg for l in lep]
+
+
+process_list = list()
+for l in lep:
+    for c in correction_level_bkg:
+        c = "_".join(c)
+        condor_submit(
+            process_list,
+            "cd", [ojoin(ojoin(out_dir, "out", name_of_lep(l)), c),
+             "PlotLimit", "-i", "HbbLimits", "-M", "sigmaBR"],
+            "_".join(["combine", c, name_of_lep(l)]),
+            runtime=30, memory=100)
+        
+bash_filename = ojoin(ojoin(tmp_dir, "script"), "condor_combine.sh")
+bash_file = open_and_create_dir(bash_filename)
+bash_file.write("#!/bin/bash\n")
+for p in process_list:
+    bash_file.write(
+        " ".join([condor_script_executable, p['filename'], p['runtime'], p['memory']]) + "\n")
+bash_file.close()
+chmod(bash_filename, 0755)
+print("Condor: run " + bash_filename)
+
+
 
 out_text = template_script.render(
     file_list=list_of_datacards,

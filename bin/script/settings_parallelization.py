@@ -1,9 +1,20 @@
 # -*- coding:utf-8 -*-
 
 from os import listdir
+from os.path import join as ojoin
+from jinja2 import FileSystemLoader, Environment
 
 import os
 import errno
+
+tmp_dir = "/afs/desy.de/user/z/zorattif/workdir/bin/_tmp"
+condor_script_executable = "/afs/desy.de/user/z/zorattif/workdir/scripts/htc_sub.sh"
+scripts_dir = "/afs/desy.de/user/z/zorattif/workdir/bin/script"
+
+template_loader = FileSystemLoader(searchpath=ojoin(scripts_dir, 'templates'))
+template_env = Environment(loader=template_loader)
+template_exec = template_env.get_template("exe.j2")
+# template_submit = template_env.get_template("htc_sub.j2")
 
 correction_level_signal = [
      ("nothing", "false"),
@@ -20,6 +31,7 @@ correction_level_signal = [
      ("smearing_btag_regression_fsr", "true"),
 ]
 
+
 correction_level_bkg = [
      ("nothing", "false"),
      ("regression", "false"),
@@ -30,6 +42,7 @@ correction_level_bkg = [
      ("fsr", "true"),
      ("regression_fsr", "true"),
 ]
+
 
 mass_points_signal = [{'mass': "120",
                 'highx': 400,
@@ -47,7 +60,6 @@ mass_points_signal = [{'mass': "120",
                 'basedir':"/pnfs/desy.de/cms/tier2/store/user/rwalsh/Analysis/Ntuples/MC/Fall17/nano_94X_mc_2017_fall17-v1/SUSYGluGluToBBHToBB_NarrowWidth_M-1200_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/180730_145131/0000/",
                 'filenames': listdir("/pnfs/desy.de/cms/tier2/store/user/rwalsh/Analysis/Ntuples/MC/Fall17/nano_94X_mc_2017_fall17-v1/SUSYGluGluToBBHToBB_NarrowWidth_M-1200_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/180730_145131/0000/")}
 ]
-
 
 
 files_eras = [
@@ -73,16 +85,6 @@ files_eras = [
     }
 ]
 
-def split_list(arr, size):
-     arrs = []
-     while len(arr) > size:
-         pice = arr[:size]
-         arrs.append(pice)
-         arr   = arr[size:]
-     arrs.append(arr)
-     return arrs
-
-
 
 bkg_files = [
     {
@@ -95,6 +97,16 @@ bkg_files = [
     }
     for params in files_eras
 ]
+
+
+def split_list(arr, size):
+     arrs = []
+     while len(arr) > size:
+         pice = arr[:size]
+         arrs.append(pice)
+         arr   = arr[size:]
+     arrs.append(arr)
+     return arrs
 
 
 def name_of_lep(l):
@@ -138,3 +150,15 @@ def get_signal_cl_from_bkg(bkg_cl):
      return (ret, appo)
 
      
+def condor_submit(process_list, executable, args, name, runtime=1800, memory=1000):
+    out_text = template_exec.render(
+        executable=executable, arg_list=args)
+    filename = name + ".sh"
+    filename = ojoin(ojoin(tmp_dir, "condor"), filename)
+    fileout = open(filename, "w")
+    fileout.write(out_text)
+    fileout.close()
+    os.chmod(filename, 0755)
+    process_list.append(
+        {'filename': filename, 'runtime': str(runtime),
+         'memory': str(memory)})
