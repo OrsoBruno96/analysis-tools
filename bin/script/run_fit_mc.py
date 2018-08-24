@@ -70,3 +70,5 @@ for c in correction_level_signal:
 script_file.close()
 chmod(script_filename, 0755)
 
+
+print(script_filename)

@@ -1,16 +1,19 @@
 #!/usr/bin/env python2.7
 # -*- coding:utf-8 -*-
 
-from settings_parallelization import correction_level_bkg, open_and_create_dir
+from settings_parallelization import correction_level_bkg, open_and_create_dir, mkdir_p
 from os.path import join as ojoin
 from os import chmod
 
 
 base_directory = "/nfs/dust/cms/user/zorattif/output"
-specific_directory = "no_reranking/medium_wp"
+specific_directory = "only_three_jets/medium_wp"
 directory_bkg = ojoin(base_directory, ojoin("raw_files/bkg" , specific_directory))
 directory_splitted_bkg = ojoin(base_directory, ojoin("split/bkg", specific_directory))
-output_directory = ojoin(ojoin(ojoin(base_directory, "plots"), specific_directory), "fit")
+output_directory_plots = ojoin(ojoin(ojoin(base_directory, "plots"), specific_directory), "fit")
+output_directory_pdf = ojoin(ojoin(base_directory, "fit/bkg"), specific_directory)
+mkdir_p(output_directory_pdf)
+mkdir_p(output_directory_plots)
 
 script_filename = "../_tmp/script/run_fits_roofit.sh"
 script_file = open(script_filename, "w")
@@ -22,7 +25,7 @@ pars = [0.001, 1862, 43, 62, 1, -0.008]
 
 subranges = [
     {
-        'min': 120,
+        'min': 100,
         'max': 600,
         'bins': 1000,
         'name': "first",
@@ -55,21 +58,25 @@ for c in correction_level_bkg:
         for e in eras:
             input_names.append(ojoin(directory_bkg, "_".join(["bkg", e, c]) + ".root"))
         out_basename = "_".join(["roofit", "bkg"] + eras + [c, sub['name']])
-        out_basename = ojoin(output_directory, out_basename)
+        # out_basename = ojoin(output_directory_plots, out_basename)
         out_pars_file = open_and_create_dir(sub['pars_filename'])
         for f in sub['pars']:
             out_pars_file.write(str(f) + "\n")
         command = [
             "FitBackgroundRoofit",
             "--input", ] + input_names + [
-                "--output", out_basename + ".root",
-                "--print", out_basename + ".png",
+                "--output", ojoin(output_directory_pdf, out_basename) + ".root",
+                "--print", ojoin(output_directory_plots, out_basename) + ".png",
                 "--min-x", str(sub["min"]),
                 "--max-x", str(sub["max"]),
                 "--bins", str(sub["bins"]),
                 "--initial-pars", sub['pars_filename'],
+                "--model", "super_novosibirsk",
         ]
         script_file.write(" ".join(command) + "\n")
         
 script_file.close()
 chmod(script_filename, 0755)
+
+print("Now run: ")
+print(script_filename)
