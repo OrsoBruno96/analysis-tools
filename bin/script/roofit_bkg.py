@@ -177,32 +177,7 @@ for c, init, frame, frame2, w, canv, canv2 in zip(
     # Now i need to do some tricks because some idiot decided to call a method
     # as a python builtin.
     hresid = frame.pullHist()
-
-    # x = ROOT.Double(0)
-    # y = ROOT.Double(0)
-    # chi2 = 0
-    # nbins = 0
-    # curve = super_novosibirsk
-    # for i in range(0, hresid.GetN()):
-    #     hresid.GetPoint(i, x, y)
-    #     eyl = hresid.GetEYlow()[i] 
-    #     eyh = hresid.GetEYhigh()[i] 
-    #     exl = hresid.GetEXlow()[i] 
-    #     exh = hresid.GetEXhigh()[i] 
-    #     # curve_yavg = curve.average(x-exl,x+exh)
-    #     Mass.setVal(x)
-    #     curven_yavg = curve.evaluate()
-    #     pull = 0.
-    #     if (y != 0):
-    #         pull = ((y - curve_yavg)/eyl) if (y > curve_yavg) else ((y - curve_yavg)/eyh)
-    #         chi2 += pull*pull
-    #         nbins += 1
-    # chimerda = Chi2Ndf(chi2, nbins - 6)
-    # print(chimerda)
-
-
-
-    
+    getattr(w, 'import')(Mass)    
     getattr(w, 'import')(super_novosibirsk)
     # w.Print()
     output_filename = c
@@ -215,6 +190,6 @@ for c, init, frame, frame2, w, canv, canv2 in zip(
     frame2.Draw()
     print("Real chi2: " + str(frame.chiSquare()))
     print("Cancro")
-    # input("Fermati")
+    input("Fermati")
 
 input("asd")
