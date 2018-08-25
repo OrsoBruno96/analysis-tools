@@ -10,6 +10,7 @@ import errno
 tmp_dir = "/afs/desy.de/user/z/zorattif/workdir/bin/_tmp"
 condor_script_executable = "/afs/desy.de/user/z/zorattif/workdir/scripts/htc_sub.sh"
 scripts_dir = "/afs/desy.de/user/z/zorattif/workdir/bin/script"
+base_dir = "/nfs/dust/cms/user/zorattif/output"
 
 template_loader = FileSystemLoader(searchpath=ojoin(scripts_dir, 'templates'))
 template_env = Environment(loader=template_loader)

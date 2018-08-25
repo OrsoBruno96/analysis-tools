@@ -3,20 +3,22 @@
 
 from jinja2 import FileSystemLoader, Environment
 from settings_parallelization import correction_level_signal, name_of_lep, \
-    open_and_create_dir, mass_points_signal
+    open_and_create_dir, mass_points_signal, base_dir, tmp_dir
 from os.path import join as ojoin
+from os import chmod
 from decimal import Decimal, getcontext
 
 matches = ["0", "1", "2"]
 getcontext().prec = 1
 
-base_dir = "/nfs/dust/cms/user/zorattif/output"
-specific_directory = "no_reranking/medium_wp"
+specific_directory = "fourth_jet_veto/medium_wp"
 
 
+script_filename = ojoin(tmp_dir, "script/plot_stack.sh")
+script_file = open_and_create_dir(script_filename)
+command_list = list()
 template_loader = FileSystemLoader(searchpath='./templates/')
 template_env = Environment(loader=template_loader)
-
 
 for mass in mass_points_signal:
     template_file = "gen_stack.json"
@@ -35,7 +37,7 @@ for mass in mass_points_signal:
                 elif int(m) == 1:
                     colore = "[0, 255, 0]"
                 elif int(m) == 2:
-                    colore = "[0, 255, 255]"
+                    colore = "[0, 0, 255]"
                 if lep:
                     leg = "L/" + m + " match"
                     nome = "mass_histo_lepton_" + m + "_match;1"
@@ -60,6 +62,20 @@ for mass in mass_points_signal:
             }
             out_text = template.render(**context)
             out_dir = ojoin(ojoin(ojoin(base_dir, "plots/"), specific_directory), "stack")
-            f = open_and_create_dir(ojoin(out_dir, outname + ".json"))
+            json_filename = ojoin(out_dir, outname + ".json")
+            pdf_filename = ojoin(out_dir, outname + ".pdf")
+            f = open_and_create_dir(json_filename)
             f.write(out_text)
             f.close()
+            command = [
+                "PlotStackStyle",
+                json_filename,
+                pdf_filename,
+            ]
+            command_list.append(" ".join(command))
+            
+for f in command_list:
+    script_file.write(f + "\n")
+script_file.close()
+chmod(script_filename, 0755)
+print(script_filename)
