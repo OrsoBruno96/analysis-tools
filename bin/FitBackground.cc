@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <fstream>
 #include <functional>
+#include <exception>
 
 #include <boost/program_options.hpp>
 
@@ -99,7 +100,145 @@ Double_t bukin(Double_t x, Double_t Ap, Double_t Xp, Double_t sp, Double_t rho1,
   
 }
 
+class undefined_model : public std::exception {
+  
+public:
+  undefined_model(const std::string name) { name_ = name; }
+  virtual const char* what() const throw() {
+    return ("Requested undefined model with name " + name_).c_str(); }
+private:
+  std::string name_;
+};
 
+
+
+
+std::function<Double_t(Double_t* x, Double_t* p)> choose_model(const std::string model_name,
+                                                               RooRealVar& x,
+                                                               std::vector<RooRealVar*>& parameters,
+                                                               RooAbsPdf*& pdf,
+                                                               UInt_t& npars) {
+  using std::vector;
+  std::function<Double_t(Double_t* x, Double_t* p)> model;
+  if (model_name == "super_novosibirsk") {
+    model = [&](double* x, double* p) {
+      return bkg_model_fit::super_novosibirsk(x[0], p[0],
+                                              p[1], p[2],
+                                              p[3], p[4], p[5], p[6]);
+    };
+    
+    RooRealVar* p0 = new RooRealVar("p0", "p0", 0, 0.007);
+    RooRealVar* p1 = new RooRealVar("p1", "p1", 1400, 2200);
+    RooRealVar* p3 = new RooRealVar("p3", "p3", 10, 100);
+    RooRealVar* p4 = new RooRealVar("p4", "p4", 10, 100);
+    RooRealVar* p5 = new RooRealVar("p5", "p5", 0, 10);
+    RooRealVar* p6 = new RooRealVar("p6", "p6", -0.3, -0.0001);
+    pdf = new super_novosibirsk("super_novosibirsk", "super_novosibirsk",
+                                x, *p0, *p1, *p3, *p4, *p5, *p6);
+    vector<RooRealVar*> appo( {p0, p1, p3, p4, p5, p6} );
+    for (auto it: appo) {
+      parameters.push_back(it);
+    }
+    
+    npars = 7;
+    return model;
+  } else if (model_name == "bukin") {
+    model = [&](double* x, double* p) {
+      return bkg_model_fit::bukin(x[0], p[0],
+                                  p[1], p[2],
+                                  p[3], p[4], p[5]);
+    };
+
+    RooRealVar* p1 = new RooRealVar("Xp", "Xp", 10, 500);
+    RooRealVar* p3 = new RooRealVar("sp", "sp", 1, 100);
+    RooRealVar* p4 = new RooRealVar("rho1", "rho1", 0, 10);
+    RooRealVar* p5 = new RooRealVar("rho2", "rho2", 0, 10);
+    RooRealVar* p6 = new RooRealVar("xi", "xi", -0.99, 0.99);
+    pdf = new bukin("bukin", "bukin",
+                                x, *p1, *p3, *p4, *p5, *p6);
+    vector<RooRealVar*> variables( {p1, p3, p4, p5, p6} );
+    for (unsigned int i = 0; i < 5; i++) {
+      parameters.push_back(variables[i]);
+    }
+    
+    npars = 6;
+    return model;
+  } else if (model_name == "bukin_modified") {
+    model = [&](double* x, double* p) {
+      return bkg_model_fit::modified_bukin(x[0], p[0],
+         p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+    };
+    npars = 8;
+    std::cerr << "Part not implemented! be careful" << std::endl;
+    return model;
+  } else {
+    throw undefined_model(model_name);
+  }
+}
+
+
+
+
+void set_successful_parameters(const std::string model_name, std::vector<RooRealVar*>& params, const TFitResult* fit_result) {
+
+  if (model_name == "super_novosibirsk") {
+    params[0]->setVal(fit_result->GetParams()[0]);
+    params[1]->setVal(fit_result->GetParams()[1]);
+    params[2]->setVal(fit_result->GetParams()[3]);
+    params[3]->setVal(fit_result->GetParams()[4]);
+    params[4]->setVal(fit_result->GetParams()[5]);
+    params[5]->setVal(fit_result->GetParams()[6]);
+  } else if (model_name == "bukin") {
+    for (int i = 0; i < 5; i++) {
+      params[i]->setVal(fit_result->GetParams()[i+1]);
+    }
+  } else {
+    std::cerr << "Not implemented" << std::endl;
+  }
+
+}
+
+void set_style_pave_fit_quality(TPaveText& pave, const Double_t& chi2,
+                                const UInt_t& ndof, const Double_t& pvalue) {
+  using std::string;
+  pave.SetBorderSize(   0 );
+  pave.SetFillStyle(    0 );
+  pave.SetTextAlign(   12 );
+  pave.SetTextSize ( 0.03 );
+  pave.SetTextColor(    1 );
+  pave.SetTextFont (   42 );
+
+  {
+    string appo1, appo2;
+    if (chi2 != chi2) {
+      appo1 = "nan";
+    }
+    if (pvalue != pvalue) {
+      appo2 = "nan";
+    }
+    if (chi2 == chi2 && pvalue == pvalue) {
+      std::stringstream ss1, ss2;
+      ss1 << std::fixed << std::setprecision(1) << chi2;
+      appo1 = ss1.str();
+      ss2 << std::fixed << std::setprecision(3) << pvalue;
+      appo2 = ss2.str();
+    }
+    pave.AddText(("#chi^{2}/ndof = " + appo1 + "/" + std::to_string(ndof)).c_str());
+    pave.AddText(("p-value: " + appo2).c_str());
+
+  }
+  return;
+}
+
+
+void print_result_table(std::ofstream& out_file, const TFitResult* result, const UInt_t& npars, std::string model_name) {
+  out_file << "# Model name: " << model_name << "\n";
+  out_file << "# Parameter\t\terror\n";
+  for (UInt_t i = 0; i < npars; i++) {
+    out_file << result->Parameter(i) << "\t" << result->Error(i) << "\n";
+  } 
+  return;
+}
 
 
 
@@ -111,6 +250,7 @@ int main(int argc, char* argv[]) {
   cmdline_options.add_options()
     ("help", "Produce help message")
     ("output", bp::value<string>()->required(), "Output ROOT file")
+    ("output-table", bp::value<string>(), "File where to store table of fit parameters.")
     ("input", bp::value<vector<string>>()->multitoken()->composing()->required(), "Input ROOT files")
     ("print", bp::value<vector<string>>()->multitoken()->composing(), "Optional: files where to print the canvas with fitted function")
     ("log-y", "Set log scale for y axis")
@@ -128,7 +268,8 @@ int main(int argc, char* argv[]) {
   bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
 
   bool print = false, logy = false, mc = true, print_initial = false, full_hadronic = false;
-  bool use_integral = false;
+  bool use_integral = false, print_table = false;
+  string out_table_name;
   Float_t lumi = 0;
   if (vm.count("lumi")) {
     mc = false;
@@ -155,7 +296,11 @@ int main(int argc, char* argv[]) {
   if (vm.count("use-integral")) {
     use_integral = true;
   }
-  std::function<Double_t(Double_t* x, Double_t* p)> model;
+  if (vm.count("output-table")) {
+    print_table = true;
+    out_table_name = vm["output-table"].as<string>();
+  }
+
   string model_name(vm["model"].as<string>());
   Float_t minx = vm["min-x"].as<Float_t>();
   Float_t maxx = vm["max-x"].as<Float_t>();
@@ -168,46 +313,12 @@ int main(int argc, char* argv[]) {
   RooAbsPdf* pdf = nullptr;
   vector<RooRealVar*> variables_to_delete;
   RooRealVar Mass("Mass", "Mass", minx, maxx);
-  
-  if (model_name == "super_novosibirsk") {
-    model = [&](double* x, double* p) {
-      return bkg_model_fit::super_novosibirsk(x[0], p[0],
-                                              p[1], p[2],
-                                              p[3], p[4], p[5], p[6]);
-    };
 
-    RooRealVar* p0 = new RooRealVar("p0", "p0", 0, 0.007);
-    RooRealVar* p1 = new RooRealVar("p1", "p1", 1400, 2200);
-    RooRealVar* p3 = new RooRealVar("p3", "p3", 10, 100);
-    RooRealVar* p4 = new RooRealVar("p4", "p4", 10, 100);
-    RooRealVar* p5 = new RooRealVar("p5", "p5", 0, 10);
-    RooRealVar* p6 = new RooRealVar("p6", "p6", -0.3, -0.0001);
-    pdf = new super_novosibirsk("super_novosibirsk", "super_novosibirsk",
-                                Mass, *p0, *p1, *p3, *p4, *p5, *p6);
-    vector<RooRealVar*> appo( {p0, p1, p3, p4, p5, p6} );
-    for (auto it: appo) {
-      variables_to_delete.push_back(it);
-    }
+  std::function<Double_t(Double_t* x, Double_t* p)> model = choose_model(model_name, Mass,
+                                                                         variables_to_delete,
+                                                                         pdf,
+                                                                         npars);
     
-    npars = 7;
-  } else if (model_name == "bukin") {
-    model = [&](double* x, double* p) {
-      return bkg_model_fit::bukin(x[0], p[0],
-                                  p[1], p[2],
-                                  p[3], p[4], p[5]);
-    };
-    npars = 6;
-  } else if (model_name == "bukin_modified") {
-    model = [&](double* x, double* p) {
-      return bkg_model_fit::modified_bukin(x[0], p[0],
-         p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-    };
-    npars = 8;
-  } else {
-    cerr << "No available model with the name given." << endl;
-    return -7;
-  }
-  
   TChain chain("output_tree");
   
   string filter_string;
@@ -285,18 +396,14 @@ int main(int argc, char* argv[]) {
   if (use_integral) {
     fit_options += string("I");
   }
-  TFitResultPtr fit_success = data_histo.Fit(&model_tf1, fit_options.c_str(), "", minx, maxx);
-  bool success = fit_success->IsValid();
+  TFitResultPtr fit_result = data_histo.Fit(&model_tf1, fit_options.c_str(), "", minx, maxx);
+  bool success = fit_result->IsValid();
 
-  if (model_name == "super_novosibirsk") {
-    variables_to_delete[0]->setVal(fit_success.Get()->GetParams()[0]);
-    variables_to_delete[1]->setVal(fit_success.Get()->GetParams()[1]);
-    variables_to_delete[2]->setVal(fit_success.Get()->GetParams()[3]);
-    variables_to_delete[3]->setVal(fit_success.Get()->GetParams()[4]);
-    variables_to_delete[4]->setVal(fit_success.Get()->GetParams()[5]);
-    variables_to_delete[5]->setVal(fit_success.Get()->GetParams()[6]);
-  } else {
-    cerr << "Not implemented" << endl;
+  set_successful_parameters(model_name, variables_to_delete, fit_result.Get());
+  if (print_table) {
+    std::ofstream out_table_file(out_table_name.c_str());
+    print_result_table(out_table_file, fit_result.Get(), npars, model_name);
+    out_table_file.close();
   }
   
   if (!print_initial) {
@@ -317,7 +424,10 @@ int main(int argc, char* argv[]) {
     c1->SetLogy();
   }
   leg.Draw("same");
-  
+
+
+
+  // Plot residuals and calculate chisquare and pvalue
   pad_res.cd();
   TVectorD dx(data_histo.GetNbinsX() - 1), dy(data_histo.GetNbinsX() - 1), \
     ddy(data_histo.GetNbinsX() - 1), ddx(data_histo.GetNbinsX() - 1);
@@ -355,39 +465,15 @@ int main(int argc, char* argv[]) {
   style.InitGraph(&graph, "M_{12} [GeV]", "#frac{Data - Fit}{#sqrt{Fit}}");
 
   pad_histo.cd();
-  TPaveText fit_result(0.65, 0.8, 0.73, 0.85, "NDC");
-  fit_result.SetBorderSize(   0 );
-  fit_result.SetFillStyle(    0 );
-  fit_result.SetTextAlign(   12 );
-  fit_result.SetTextSize ( 0.03 );
-  fit_result.SetTextColor(    1 );
-  fit_result.SetTextFont (   42 );
-
-  {
-    string appo1, appo2;
-    if (chi2 != chi2) {
-      appo1 = "nan";
-    }
-    if (pvalue != pvalue) {
-      appo2 = "nan";
-    }
-    if (chi2 == chi2 && pvalue == pvalue) {
-      std::stringstream ss1, ss2;
-      ss1 << std::fixed << std::setprecision(1) << chi2;
-      appo1 = ss1.str();
-      ss2 << std::fixed << std::setprecision(3) << pvalue;
-      appo2 = ss2.str();
-    }
-    fit_result.AddText(("#chi^{2}/ndof = " + appo1 + "/" + std::to_string(ndof)).c_str());
-    fit_result.AddText(("p-value: " + appo2).c_str());
-    fit_result.Draw();
-  }
-
+  TPaveText fit_result_pave(0.65, 0.8, 0.73, 0.85, "NDC");
+  set_style_pave_fit_quality(fit_result_pave, chi2, ndof, pvalue);
+  fit_result_pave.Draw();
 
   TFile output_file_(output_file.c_str(), "recreate");
   RooWorkspace w("w");
   w.import(*pdf);
   w.Write();
+  cout << "Written workspace on file " << output_file << endl;
   
   c1->Update();
   if (print) {
