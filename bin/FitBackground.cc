@@ -421,7 +421,7 @@ int main(int argc, char* argv[]) {
   }
   style.CMSPrelim(mc, appo.c_str(), 0.15, 0.79);
   if (logy) {
-    c1->SetLogy();
+    pad_histo.SetLogy();
   }
   leg.Draw("same");
 
