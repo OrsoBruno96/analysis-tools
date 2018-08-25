@@ -156,10 +156,17 @@ def condor_submit(process_list, executable, args, name, runtime=1800, memory=100
         executable=executable, arg_list=args)
     filename = name + ".sh"
     filename = ojoin(ojoin(tmp_dir, "condor"), filename)
-    fileout = open(filename, "w")
+    fileout = open_and_create_dir(filename)
     fileout.write(out_text)
     fileout.close()
     os.chmod(filename, 0755)
     process_list.append(
         {'filename': filename, 'runtime': str(runtime),
          'memory': str(memory)})
+
+def create_condor_file(filename, process_list):
+     condor_file = open_and_create_dir(filename)
+     for p in process_list:
+          condor_file.write(" ".join(
+               [condor_script_executable, p['filename'], p['runtime'], p['memory']]) + "\n")
+     condor_file.close()

@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 from settings_parallelization import correction_level_bkg, open_and_create_dir, mkdir_p, \
-    tmp_dir, correction_level_signal, base_dir
+    tmp_dir, correction_level_signal, base_dir, condor_submit, create_condor_file
 from os.path import join as ojoin
 from os import chmod
 
@@ -30,7 +30,8 @@ eras = ["C", "D", "E", "F"]
 lumi = 35.6
 
 pars = [0.001, 1862, 240559, 43, 62, 1, -0.008]
-pars_chr = [0.001, 1700,  120559, 120, 70, 1, -0.008]
+pars_chr = [0.001, 1700,  60559, 250, 70, 1, -0.008]
+process_list = list()
 
 subranges = {
     "lep": [
@@ -42,6 +43,7 @@ subranges = {
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_lep_supernovo_first.txt"),
             'pars': pars,
             'model': "super_novosibirsk",
+            'logy': False
         },
         {
             'min': 400,
@@ -51,6 +53,7 @@ subranges = {
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_lep_supernovo_second.txt"),
             'pars': pars,
             'model': "super_novosibirsk",
+            'logy': True,
         },
         {
         'min': 800,
@@ -60,6 +63,7 @@ subranges = {
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_lep_supernovo_third.txt"),
             'pars': pars,
             'model': "super_novosibirsk",
+            'logy': True,
         },
     ],
     "chr": [
@@ -71,6 +75,7 @@ subranges = {
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_chr_supernovo_first.txt"),
             'pars': pars_chr,
             'model': "super_novosibirsk",
+            'logy': False,
         },
         {
             'min': 400,
@@ -80,6 +85,7 @@ subranges = {
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_chr_supernovo_second.txt"),
             'pars': pars_chr,
             'model': "super_novosibirsk",
+            'logy': True,
         },
         {
             'min': 800,
@@ -89,6 +95,7 @@ subranges = {
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_chr_supernovo_third.txt"),
             'pars': pars_chr,
             'model': "super_novosibirsk",
+            'logy': True,
         },
     ],
 }
@@ -96,16 +103,27 @@ subranges = {
 
 pars_bukin_350 = [350, 310., 60., 0.01, 0.01, -0.2]
 pars_bukin_1200 = [80, 1100, 300, 0.01, 0.01, 0.01]
+pars_bukin_120 = [50, 120, 30, 0.01, 0.01, 0.01]
 
 mass_points = {
     "lep": {
+        "120": {
+            'min': 0,
+            'max': 400,
+            'bins': 40,
+            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_120.txt"),
+            'pars': pars_bukin_120,
+            'model': "bukin",
+            'logy': False,
+        },
         "350": {
             'min': 80,
             'max': 550,
             'bins': 60,
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_350.txt"),
             'pars': pars_bukin_350,
-            'model': "bukin"
+            'model': "bukin",
+            'logy': False,
         },
         "1200": {
             'min': 100,
@@ -113,25 +131,37 @@ mass_points = {
             'bins': 60,
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_1200.txt"),
             'pars': pars_bukin_1200,
-            'model': "bukin"
+            'model': "bukin",
+            'logy': False,
         },
     },
     "chr": {
+        "120": {
+            'min': 150,
+            'max': 500,
+            'bins': 20,
+            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_120.txt"),
+            'pars': pars_bukin_120,
+            'model': "bukin",
+            'logy': False,
+        },
         "350": {
             'min': 180,
             'max': 500,
             'bins': 60,
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_350.txt"),
             'pars': pars_bukin_350,
-            'model': "bukin"
+            'model': "bukin",
+            'logy': False,
         },
         "1200": {
-            'min': 100,
-            'max': 1400,
+            'min': 300,
+            'max': 1500,
             'bins': 60,
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_1200.txt"),
             'pars': pars_bukin_1200,
-            'model': "bukin"
+            'model': "bukin",
+            'logy': False,
         }
     }
 }
@@ -153,6 +183,7 @@ if __name__ == "__main__":
                     "--input", ] + input_names + [
                         "--output", ojoin(output_root_directory, out_basename + ".root"),
                         "--print", ojoin(output_print_directory, out_basename + ".pdf"),
+                        ojoin(output_print_directory, out_basename + ".png"),
                         "--lumi", str(lumi),
                         "--min-x", str(sub["min"]),
                         "--max-x", str(sub["max"]),
@@ -164,7 +195,13 @@ if __name__ == "__main__":
                     ]
                 if l == "chr":
                     command.append("--full-hadronic")
+                if sub['logy']:
+                    command.append("--log-y")
                 script_file_bkg.write(" ".join(command) + "\n")
+                condor_submit(
+                    process_list, "", command, ojoin(tmp_dir, ojoin("condor/fit", out_basename)),
+                    120, 100)
+
         
     script_file_bkg.close()
     chmod(script_filename_bkg, 0755)
@@ -184,6 +221,7 @@ if __name__ == "__main__":
                     "--input", input_filename,
                     "--output", ojoin(output_root_directory, out_basename + ".root"),
                     "--print", ojoin(output_print_directory, out_basename + ".pdf"),
+                    ojoin(output_print_directory, out_basename + ".png"),
                     "--min-x", str(sub["min"]),
                     "--max-x", str(sub["max"]),
                     "--bins", str(sub["bins"]),
@@ -194,7 +232,12 @@ if __name__ == "__main__":
                 ]
                 if l == "chr":
                     command.append("--full-hadronic")
+                if sub['logy']:
+                    command.append("--log-y")
                 script_file_mc.write(" ".join(command) + "\n")
+                condor_submit(
+                    process_list, "", command, ojoin(tmp_dir, ojoin("condor/fit", out_basename)),
+                    120, 100)
 
     script_file_mc.close()
     chmod(script_filename_mc, 0755)
@@ -203,3 +246,9 @@ if __name__ == "__main__":
     print("I produced 2 bash scripts that can be run with condor. Please run:")
     print(script_filename_bkg)
     print(script_filename_mc)
+    condor_filename = ojoin(tmp_dir, "script/condor_fit.sh")
+    create_condor_file(condor_filename, process_list)
+    chmod(condor_filename, 0755)
+    print("I created a condor submission file to run all parallel instead of "
+          + "previous one. If you want condor, run: ")
+    print(condor_filename)
