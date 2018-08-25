@@ -3,7 +3,8 @@
 
 from jinja2 import FileSystemLoader, Environment
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
-    name_of_lep, open_and_create_dir, mass_points_signal, bkg_files
+    name_of_lep, open_and_create_dir, mass_points_signal, bkg_files, tmp_dir, base_dir, \
+    mkdir_p
 from ROOT import TFile, TChain, TH1F
 from os.path import join as ojoin
 from os import chmod
@@ -30,16 +31,17 @@ getcontext().prec = 1
 lep = True
 
 
-base_directory = "/nfs/dust/cms/user/zorattif/output"
-cur_working = "no_reranking/medium_wp"
-output_name = ojoin(ojoin(base_directory, ojoin(ojoin("plots", cur_working), "ratio")), "_".join(
-    ["ratio", name_of_lep(lep), type_choice, plot_choice] + era1 +[corr_level1, ] + era2 + [corr_level2]) + ".pdf")
+cur_working = "fourth_jet_veto/medium_wp"
+output_dir = ojoin(base_dir, ojoin(ojoin("plots", cur_working), "ratio"))
+mkdir_p(output_dir) 
+output_name = "_".join(["ratio", name_of_lep(lep), type_choice, plot_choice] + era1 +[corr_level1, ] + era2 + [corr_level2]) + ".pdf"
+output_name = ojoin(output_dir, output_name)
 
 
 
 # Modify after this only if you know what are doing
 tmp_filename = "/nfs/dust/cms/user/zorattif/trash/tmp.root"
-templated_filename = "../_tmp/template/ratioplot.json"
+templated_filename = ojoin(tmp_dir, "template/ratioplot.json")
 template_loader = FileSystemLoader(searchpath='./templates/')
 template_env = Environment(loader=template_loader)
 template = template_env.get_template("ratioplot.j2")
@@ -125,7 +127,7 @@ def join_filter_string(first, second=None):
 
 
 
-input_directory = ojoin(base_directory, "raw_files")
+input_directory = ojoin(base_dir, "raw_files")
 input_directory = ojoin(input_directory, type_choice)
 input_directory = ojoin(input_directory, cur_working)
 tree1 = TChain("output_tree")
@@ -139,12 +141,12 @@ for e in era2:
     tree2.Add(input_filename2)
 
 tmp_histo_file = TFile(tmp_filename, "recreate")
-histo1 = TH1F("tmp1", possibilities[plot_choice]['title'], binx, 0, highx)
-histo2 = TH1F("tmp2", possibilities[plot_choice]['title'], binx, 0, highx)
+histo1 = TH1F("tmp1", possibilities[plot_choice]['title'], binx, lowx, highx)
+histo2 = TH1F("tmp2", possibilities[plot_choice]['title'], binx, lowx, highx)
 tree1.Draw(possibilities[plot_choice]['tree'] + ">>tmp1",
-           join_filter_string(get_filter_string(lep), extra_filter1), "")
+           join_filter_string(get_filter_string(lep), extra_filter1), "goff")
 tree2.Draw(possibilities[plot_choice]['tree'] + ">>tmp2",
-           join_filter_string(get_filter_string(lep), extra_filter2), "")
+           join_filter_string(get_filter_string(lep), extra_filter2), "goff")
 histo1.Write()
 histo2.Write()
 tmp_histo_file.Close()
@@ -180,9 +182,11 @@ if fix_max_ratio is not None:
 if type_choice != "MC" and lumi is not None:
    command += ["--lumi", str(lumi)]
 # proc = Popen(command, stdout=PIPE, stderr=PIPE)
-print(" ".join(command))
-out_bash_filename = "../_tmp/script/run_ratioplot.sh"
+# print(" ".join(command))
+out_bash_filename = ojoin(tmp_dir, "script/run_ratioplot.sh")
 out_bash_file = open(out_bash_filename, "w")
 out_bash_file.write(" ".join(command))
 out_bash_file.close()
 chmod(out_bash_filename, 0755)
+print("Now run:")
+print(out_bash_filename)

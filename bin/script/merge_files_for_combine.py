@@ -9,12 +9,13 @@ from ROOT.RooFit import Import
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
     name_of_lep, open_and_create_dir, mkdir_p, get_signal_cl_from_bkg, tmp_dir, \
-    condor_submit, condor_script_executable
+    condor_submit, condor_script_executable, base_dir
 from os.path import join as ojoin
 from os import chmod
 
 
 shape_bkg = False
+specific_directory = "only_three_jets/medium_wp"
 
 lep = [False, True]
 eras = ["C", "D", "E", "F"]
@@ -53,21 +54,17 @@ correct_fit_bkg = {
 
 
 scale_factor_MC = lumi/1000
-
-base_directory = "/nfs/dust/cms/user/zorattif/output"
-specific_directory = "only_three_jets/medium_wp"
-
-directory_bkg = ojoin(base_directory, ojoin("raw_files/bkg" , specific_directory))
-directory_splitted_bkg = ojoin(base_directory, ojoin("split/bkg", specific_directory))
-directory_mc = ojoin(base_directory, ojoin("raw_files/MC", specific_directory))
-directory_sig = ojoin(base_directory, ojoin("raw_files/signal", specific_directory))
-directory_fit = ojoin(ojoin(base_directory, "fit/bkg"), specific_directory)
+directory_bkg = ojoin(base_dir, ojoin("raw_files/bkg" , specific_directory))
+directory_splitted_bkg = ojoin(base_dir, ojoin("split/bkg", specific_directory))
+directory_mc = ojoin(base_dir, ojoin("raw_files/MC", specific_directory))
+directory_sig = ojoin(base_dir, ojoin("raw_files/signal", specific_directory))
+directory_fit = ojoin(ojoin(base_dir, "fit/bkg"), specific_directory)
 
 if shape_bkg:
     sssspecific_dir = "shape"
 else:
     sssspecific_dir = "template"
-out_dir = ojoin(base_directory, ojoin(
+out_dir = ojoin(base_dir, ojoin(
     ojoin("combine_tool", sssspecific_dir), specific_directory))
 mkdir_p(out_dir)
 output_script_filedir = ojoin(tmp_dir, "script")
