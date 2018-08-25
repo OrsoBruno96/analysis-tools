@@ -32,7 +32,7 @@ lep = True
 
 base_directory = "/nfs/dust/cms/user/zorattif/output"
 cur_working = "no_reranking/medium_wp"
-output_name = ojoin(ojoin(base_directory, ojoin("plots", cur_working)), "_".join(
+output_name = ojoin(ojoin(base_directory, ojoin(ojoin("plots", cur_working), "ratio")), "_".join(
     ["ratio", name_of_lep(lep), type_choice, plot_choice] + era1 +[corr_level1, ] + era2 + [corr_level2]) + ".pdf")
 
 
