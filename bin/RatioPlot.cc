@@ -172,15 +172,21 @@ int main(int argc, char* argv[]) {
   ratio.GetUpperPad()->SetLeftMargin(0.14);
   style.SetLegendStyle(&leg);
   ratio.Draw();
+  
   string appo;
+  Float_t bottom = 0, left = 0;
   if (mc) {
     appo = string("MC");
+    bottom = 0.79;
+    left = 0.15;
   } else {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(1) << lumi;
     appo = ss.str() + " fb^{-1} (13 TeV)";
+    bottom = 0.76;
+    left = 0.14;
   }
-  style.CMSPrelim(mc, appo.c_str(), 0.15, 0.79);  
+  style.CMSPrelim(mc, appo.c_str(), left, bottom);
   if (set_min) {
     ratio.GetLowerRefGraph()->SetMinimum(min);
   }
