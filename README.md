@@ -14,3 +14,13 @@ make all
 cd ..
 scram b -k -j4
 ```
+
+## Workflow
+
+All my analysis is done with the template file `AnalysisJetsSmrBTagRegFSRMatch.j2`. With the commands in the `Makefile` you can produce all the binaries for running the analysis on both MC, signal and background.
+
+To fit everything now the useful file is `bin/script/fit_script.py`, all the others are deprecated. This will produce some bash scripts that call the program `FitBackground`. Actually, the name is misleading, it will fit everything. The program `FitBackgroundRoofit` is deprecated.
+
+To produce files for the CombineTool you can run the script `bin/script/merge_files_for_combine.py`.
+
+The programs `AddNormalizationToFile`, `AnalysisQGLBtag`, `MoveRoohisto`, `PlotStackStyle`, `PlotWithStyle`, `RatioPlot`, `SplitTree` are utils file written by me. The names should suggest their use.
