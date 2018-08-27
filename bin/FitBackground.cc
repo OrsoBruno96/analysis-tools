@@ -412,14 +412,19 @@ int main(int argc, char* argv[]) {
   }
 
   string appo;
+  Float_t left = 0, right = 0;
   if (mc) {
     appo = string("MC");
+    left = 0.15;
+    right = 0.82;
   } else {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(1) << lumi;
     appo = ss.str() + " fb^{-1} (13 TeV)";
+    left = 0.15;
+    right = 0.79;
   }
-  style.CMSPrelim(mc, appo.c_str(), 0.15, 0.79);
+  style.CMSPrelim(mc, appo.c_str(), left, right);
   if (logy) {
     pad_histo.SetLogy();
   }
