@@ -30,14 +30,14 @@ eras = ["C", "D", "E", "F"]
 lumi = 35.6
 
 pars = [0.001, 1862, 240559, 43, 62, 1, -0.008]
-pars_chr = [0.001, 1700,  60559, 250, 70, 1, -0.008]
+pars_chr = [0.001, 1700,  60559, 250, 70, 2, -0.008]
 process_list = list()
 
 subranges = {
     "lep": [
         {
-            'min': 110,
-            'max': 700,
+            'min': 130,
+            'max': 650,
             'bins': 750,
             'name': "first",
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_lep_supernovo_first.txt"),
@@ -68,7 +68,7 @@ subranges = {
     ],
     "chr": [
         {
-            'min': 200,
+            'min': 250,
             'max': 700,
             'bins': 300,
             'name': "first",
@@ -78,12 +78,12 @@ subranges = {
             'logy': False,
         },
         {
-            'min': 400,
+            'min': 500,
             'max': 1100,
             'bins': 200,
             'name': "second",
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_chr_supernovo_second.txt"),
-            'pars': pars_chr,
+            'pars':  [0.001, 1700,  60559, 400, 70, 3, -0.008],
             'model': "super_novosibirsk",
             'logy': True,
         },
@@ -101,18 +101,18 @@ subranges = {
 }
 
 
-pars_bukin_350 = [350, 310., 60., 0.01, 0.01, -0.2]
+pars_bukin_350 = [350, 310., 40., 0.01, 0.01, -0.1]
 pars_bukin_1200 = [80, 1100, 300, 0.01, 0.01, 0.01]
 pars_bukin_120 = [50, 120, 30, 0.01, 0.01, 0.01]
 
 mass_points = {
     "lep": {
         "120": {
-            'min': 0,
+            'min': 60,
             'max': 400,
             'bins': 40,
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_120.txt"),
-            'pars': pars_bukin_120,
+            'pars': [10, 120, 30, 0.01, 0.01, 0.01],
             'model': "bukin",
             'logy': False,
         },
@@ -121,27 +121,27 @@ mass_points = {
             'max': 550,
             'bins': 60,
             'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_350.txt"),
-            'pars': pars_bukin_350,
+            'pars': [40, 340., 40., 0.01, 0.01, -0.02],
             'model': "bukin",
             'logy': False,
         },
         "1200": {
-            'min': 100,
+            'min': 400,
             'max': 1400,
             'bins': 60,
-            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_1200.txt"),
-            'pars': pars_bukin_1200,
+            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_lep_1200.txt"),
+            'pars': [7, 1100, 100, 0.01, 0.01, -0.005],
             'model': "bukin",
             'logy': False,
         },
     },
     "chr": {
         "120": {
-            'min': 150,
+            'min': 180,
             'max': 500,
             'bins': 20,
-            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_120.txt"),
-            'pars': pars_bukin_120,
+            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_chr_120.txt"),
+            'pars': [8, 260, 30, 0.01, 0.01, 0.01],
             'model': "bukin",
             'logy': False,
         },
@@ -149,7 +149,7 @@ mass_points = {
             'min': 180,
             'max': 500,
             'bins': 60,
-            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_350.txt"),
+            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_chr_350.txt"),
             'pars': pars_bukin_350,
             'model': "bukin",
             'logy': False,
@@ -158,8 +158,8 @@ mass_points = {
             'min': 300,
             'max': 1500,
             'bins': 60,
-            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_1200.txt"),
-            'pars': pars_bukin_1200,
+            'pars_filename': ojoin(tmp_dir, "fit/init_pars_bukin_chr_1200.txt"),
+            'pars': [40, 1100, 300, 0.01, 0.01, -0.08],
             'model': "bukin",
             'logy': False,
         }
@@ -192,6 +192,7 @@ if __name__ == "__main__":
                         "--initial-pars", sub['pars_filename'],
                         "--model", sub['model'],
                         "--use-integral",
+                        # "--print-initial",
                     ]
                 if l == "chr":
                     command.append("--full-hadronic")
@@ -229,6 +230,7 @@ if __name__ == "__main__":
                     "--initial-pars", sub['pars_filename'],
                     "--model", sub['model'],
                     "--use-integral",
+                    # "--print-initial",
                 ]
                 if l == "chr":
                     command.append("--full-hadronic")
