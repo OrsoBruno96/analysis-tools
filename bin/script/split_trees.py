@@ -2,18 +2,17 @@
 # -*- coding:utf-8 -*-
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
-    name_of_lep, open_and_create_dir, mkdir_p
+    name_of_lep, open_and_create_dir, mkdir_p, base_dir, tmp_dir
 from os import chmod
 from os.path import join as ojoin
 
-base_directory = "/nfs/dust/cms/user/zorattif/output"
-specific_directory = "distribution_corrections_before_jets_3_FSR_pt_20_deltar_08/medium_wp"
+specific_directory = "fourth_jet_veto/tight_wp"
 
-directory_bkg = ojoin(base_directory, ojoin("raw_files/bkg" , specific_directory))
-directory_splitted_bkg = ojoin(base_directory, ojoin("split/bkg", specific_directory))
+directory_bkg = ojoin(base_dir, ojoin("raw_files/bkg" , specific_directory))
+directory_splitted_bkg = ojoin(base_dir, ojoin("split/bkg", specific_directory))
 mkdir_p(directory_splitted_bkg)
 
-script_filename = "../_tmp/script/split_all.sh"
+script_filename = ojoin(tmp_dir, "script/split_all.sh")
 script_file = open_and_create_dir(script_filename)
 eras = ["C", "D", "E", "F"]
 prescale = 11
