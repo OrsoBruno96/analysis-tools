@@ -7,9 +7,11 @@ from jinja2 import FileSystemLoader, Environment
 import os
 import errno
 
-tmp_dir = "/afs/desy.de/user/z/zorattif/workdir/bin/_tmp"
-condor_script_executable = "/afs/desy.de/user/z/zorattif/workdir/scripts/htc_sub.sh"
-scripts_dir = "/afs/desy.de/user/z/zorattif/workdir/bin/script"
+bin_dir = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+tmp_dir = os.path.join(bin_dir, "_tmp")
+condor_script_executable = os.path.join(os.path.normpath(os.path.join(bin_dir, os.pardir)),
+                                        "scripts/htc_sub.sh")
+scripts_dir = os.path.join(bin_dir, "script")
 base_dir = "/nfs/dust/cms/user/zorattif/output"
 
 template_loader = FileSystemLoader(searchpath=ojoin(scripts_dir, 'templates'))

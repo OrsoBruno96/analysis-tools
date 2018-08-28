@@ -24,3 +24,5 @@ To fit everything now the useful file is `bin/script/fit_script.py`, all the oth
 To produce files for the CombineTool you can run the script `bin/script/merge_files_for_combine.py`.
 
 The programs `AddNormalizationToFile`, `AnalysisQGLBtag`, `MoveRoohisto`, `PlotStackStyle`, `PlotWithStyle`, `RatioPlot`, `SplitTree` are utils file written by me. The names should suggest their use.
+
+Please set the variable `base_dir` in the file `bin/script/settings_parallelization.py` before running stuff. It's the only absolute path that really needs to be set manually.
