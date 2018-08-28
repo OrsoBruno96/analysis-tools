@@ -74,8 +74,10 @@ enum class Match {
 
 const Float_t rcone(0.4);
 const unsigned int kLen = 100;
-const Float_t deepcsv_cut_tight = 0.4941;
-const Float_t deepcsv_cut_loose = 0.1522;
+constexpr bool use_tight_wp = false;
+constexpr Float_t deepcsv_cut_loose = 0.1522;
+constexpr Float_t deepcsv_cut_tight = 0.8001;
+constexpr Float_t deepcsv_cut_medium = 0.4941;
 const Float_t b_tagging_efficiency = 0.99;
 const Int_t kTight = 2;
 const array<Float_t, 3> pt_cut_had{ {100, 100, 40} };
@@ -240,11 +242,12 @@ class DataContainer {
 
 
   inline Bool_t compare_with_right_deepcsv(UInt_t idx{% if bkg %}, UInt_t btagged{% endif %}) {
+    constexpr Float_t high_cut = use_tight_wp ? deepcsv_cut_tight : deepcsv_cut_medium;
     {% if bkg %}
-    return (btagged < 2) ? btag_deep_[idx] > deepcsv_cut_tight  \
+    return (btagged < 2) ? btag_deep_[idx] > high_cut  \
       : btag_deep_[idx] < deepcsv_cut_loose;
     {% else %}
-    return (btag_deep_[idx] > deepcsv_cut_tight);
+    return (btag_deep_[idx] > high_cut);
     {% endif %}
   }
 
@@ -341,10 +344,21 @@ class DataContainer {
 /**
  * @brief Constructor that opens btag scalefactor file.
  */
-DataContainer::DataContainer() : resolution("tables/Fall17_25nsV1_MC_PtResolution_AK4PFchs.txt"), \
-                                 resolution_sf("tables/Fall17_25nsV1_MC_SF_AK4PFchs.txt") , \
-                                 calib("deepcsv", "tables/DeepCSV_94XSF_V3_B_F.csv"), \
-                                 reader(&calib, BTagEntry::OP_MEDIUM) {}
+// DataContainer::DataContainer(TH1F* pt0, TH1F* pt1, TH1F* DR0, TH1F* DR1, TH1F* deltaR_530, TH1F* deltaR_580) :
+DataContainer::DataContainer() : 
+  resolution("tables/Fall17_25nsV1_MC_PtResolution_AK4PFchs.txt"),
+  resolution_sf("tables/Fall17_25nsV1_MC_SF_AK4PFchs.txt"),
+  calib("deepcsv", "tables/DeepCSV_94XSF_V3_B_F.csv") {
+  // histo_soft_pt0(pt0),
+  // histo_soft_pt1(pt1),
+  // histo_soft_DeltaR0(DR0),
+  // histo_soft_DeltaR1(DR1),
+  // histo_deltaR530(deltaR_530),
+  // histo_deltaR580(deltaR_580) {
+  constexpr BTagEntry::OperatingPoint op = \
+    use_tight_wp ? BTagEntry::OP_TIGHT : BTagEntry::OP_MEDIUM;
+  reader = BTagCalibrationReader(&calib, op);
+  }
 
 
 void DataContainer::sort_by_Pt() {
@@ -1256,7 +1270,8 @@ void DataContainer::apply_btag_sf() {
   UInt_t btagged = 0;
   
   for (auto it = corrected_jet.begin(); it != corrected_jet.end() && btagged < 3; it++) {
-    if (btag_deep_[it->Idx()] > deepcsv_cut_tight) {
+    constexpr Float_t high_cut = use_tight_wp ? deepcsv_cut_tight : deepcsv_cut_medium;
+    if (btag_deep_[it->Idx()] > high_cut) {
       BTagEntry::JetFlavor flavour;
       if (TMath::Abs(genjet_parton_flavour_[it->Idx()]) == pdgBId) {
         flavour = BTagEntry::FLAV_B;
@@ -1303,7 +1318,8 @@ void DataContainer::apply_fsr_correction() {
     return;
   }
   for (UInt_t i = 0; i < njet_; i++) {
-    if (btag_deep_[corrected_jet[i].Idx()] > deepcsv_cut_tight) {
+    constexpr Float_t high_cut = use_tight_wp ? deepcsv_cut_tight : deepcsv_cut_medium;
+    if (btag_deep_[corrected_jet[i].Idx()] > high_cut) {
       bjets.push_back(std::make_tuple(corrected_jet[i], i));
     } else {
       softjets.push_back(corrected_jet[i]);
