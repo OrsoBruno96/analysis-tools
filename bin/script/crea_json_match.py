@@ -39,7 +39,7 @@ for mass in mass_points_signal:
                 elif int(m) == 2:
                     colore = "[0, 0, 255]"
                 if lep:
-                    leg = "L/" + m + " match"
+                    leg = "SL/" + m + " match"
                     nome = "mass_histo_lepton_" + m + "_match;1"
                 else:
                     leg = "FH/" + m + " match"
