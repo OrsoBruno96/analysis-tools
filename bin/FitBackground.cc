@@ -112,91 +112,131 @@ private:
 
 
 
+class ModelFunction {
+public:
+  ModelFunction(const std::string& x_var_name, const Double_t& min_x, const Double_t& max_x) :
+    min_x_(min_x), max_x_(max_x), x_(x_var_name.c_str(), x_var_name.c_str(), min_x, max_x ) { pdf_ = nullptr; }
+  ~ModelFunction() { delete pdf_; }
+  virtual std::function<Double_t(Double_t* x, Double_t* p)> evaluate_normalized() const = 0;
+  virtual std::function<Double_t(Double_t* x, Double_t*p)> evaluate_floating() const = 0;
+  virtual std::string get_name() const = 0;
+  virtual UInt_t get_par_number_normalized() const = 0;
+  virtual UInt_t get_par_number() const = 0;
+  virtual void pick_parameters(const TFitResult* fit_result);
+  RooAbsPdf* get_pdf() { return pdf_; }
+  TF1 create_normalized_tf1(const std::string& name, const Double_t& minx, const Double_t& maxx) const;
+  TF1 create_tf1(const std::string& name, const Double_t& minx, const Double_t& maxx) const;
 
-std::function<Double_t(Double_t* x, Double_t* p)> choose_model(const std::string model_name,
-                                                               RooRealVar& x,
-                                                               std::vector<RooRealVar*>& parameters,
-                                                               RooAbsPdf*& pdf,
-                                                               UInt_t& npars) {
-  using std::vector;
-  std::function<Double_t(Double_t* x, Double_t* p)> model;
-  if (model_name == "super_novosibirsk") {
-    model = [&](double* x, double* p) {
-      return bkg_model_fit::super_novosibirsk(x[0], p[0],
-                                              p[1], p[2],
-                                              p[3], p[4], p[5], p[6]);
-    };
-    
-    RooRealVar* p0 = new RooRealVar("p0", "p0", 0, 0.007);
-    RooRealVar* p1 = new RooRealVar("p1", "p1", 1400, 2200);
-    RooRealVar* p3 = new RooRealVar("p3", "p3", 10, 100);
-    RooRealVar* p4 = new RooRealVar("p4", "p4", 10, 100);
-    RooRealVar* p5 = new RooRealVar("p5", "p5", 0, 10);
-    RooRealVar* p6 = new RooRealVar("p6", "p6", -0.3, -0.0001);
-    pdf = new super_novosibirsk("super_novosibirsk", "super_novosibirsk",
-                                x, *p0, *p1, *p3, *p4, *p5, *p6);
-    vector<RooRealVar*> appo( {p0, p1, p3, p4, p5, p6} );
-    for (auto it: appo) {
-      parameters.push_back(it);
-    }
-    
-    npars = 7;
-    return model;
-  } else if (model_name == "bukin") {
-    model = [&](double* x, double* p) {
-      return bkg_model_fit::bukin(x[0], p[0],
-                                  p[1], p[2],
-                                  p[3], p[4], p[5]);
-    };
+protected:
+  std::vector<RooRealVar> parameters_;
+  Double_t min_x_;
+  Double_t max_x_;
+  RooRealVar x_;
+  RooAbsPdf* pdf_;
+};
 
-    RooRealVar* p1 = new RooRealVar("Xp", "Xp", 10, 500);
-    RooRealVar* p3 = new RooRealVar("sp", "sp", 1, 100);
-    RooRealVar* p4 = new RooRealVar("rho1", "rho1", 0, 10);
-    RooRealVar* p5 = new RooRealVar("rho2", "rho2", 0, 10);
-    RooRealVar* p6 = new RooRealVar("xi", "xi", -0.99, 0.99);
-    pdf = new bukin("bukin", "bukin",
-                                x, *p1, *p3, *p4, *p5, *p6);
-    vector<RooRealVar*> variables( {p1, p3, p4, p5, p6} );
-    for (unsigned int i = 0; i < 5; i++) {
-      parameters.push_back(variables[i]);
-    }
-    
-    npars = 6;
-    return model;
-  } else if (model_name == "bukin_modified") {
-    model = [&](double* x, double* p) {
-      return bkg_model_fit::modified_bukin(x[0], p[0],
-         p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-    };
-    npars = 8;
-    std::cerr << "Part not implemented! be careful" << std::endl;
-    return model;
-  } else {
-    throw undefined_model(model_name);
+
+TF1 ModelFunction::create_normalized_tf1(const std::string& name, const Double_t& minx, const Double_t& maxx) const {
+  return TF1(name.c_str(), evaluate_normalized(), minx, maxx, get_par_number_normalized());
+}
+
+TF1 ModelFunction::create_tf1(const std::string& name, const Double_t& minx, const Double_t& maxx) const {
+  return TF1(name.c_str(), evaluate_floating(), minx, maxx, get_par_number());
+}
+
+void ModelFunction::pick_parameters(const TFitResult* fit_result) {
+  for (UInt_t i = 0; i < get_par_number_normalized(); i++) {
+    parameters_[i].setVal(fit_result->Parameter(i));
   }
+}
+
+
+class SuperNovosibirsk : public ModelFunction {
+public:
+  SuperNovosibirsk(const std::string& x_var_name, const Double_t& min_x, const Double_t& max_x);
+  std::function<Double_t(Double_t* x, Double_t* p)> evaluate_normalized() const;
+  std::function<Double_t(Double_t* x, Double_t* p)> evaluate_floating() const;
+  std::string get_name() const { return "super_novosibirsk"; };
+  UInt_t get_par_number() const { return 7; }
+  UInt_t get_par_number_normalized() const { return 6; }
+private:
+};
+
+
+std::function<Double_t(Double_t* x, Double_t* p)> SuperNovosibirsk::evaluate_floating() const {
+  return [&](double* x, double* p) {
+    return bkg_model_fit::super_novosibirsk(x[0], p[0], p[1], p[2],
+                                            p[3], p[4], p[5], p[6]);
+  };
+}
+
+std::function<Double_t(Double_t* x, Double_t* p)> SuperNovosibirsk::evaluate_normalized() const {
+  return [&](double* x, double* p) {
+    // fix this shit
+    return bkg_model_fit::super_novosibirsk(x[0], p[0], p[1], 1,
+                                            p[2], p[3], p[4], p[5]);
+  };
+}
+
+
+SuperNovosibirsk::SuperNovosibirsk(const std::string& x_var_name, const Double_t& min_x, const Double_t& max_x) :
+  ModelFunction(x_var_name, min_x, max_x) {
+  parameters_.push_back(RooRealVar("p0", "p0", 0, 0.007));
+  parameters_.push_back(RooRealVar("p1", "p1", 1400, 2200));
+  parameters_.push_back(RooRealVar("p3", "p3", 10, 100));
+  parameters_.push_back(RooRealVar("p4", "p4", 10, 100));
+  parameters_.push_back(RooRealVar("p5", "p5", 0, 10));
+  parameters_.push_back(RooRealVar("p6", "p6", -0.3, -0.0001));
+
+  pdf_ = new super_novosibirsk("super_novosibirsk", "super_novosibirsk",
+                               x_, parameters_[0], parameters_[1], parameters_[2],
+                               parameters_[3], parameters_[4], parameters_[5]);
+}
+
+
+class Bukin : public ModelFunction {
+public:
+  Bukin(const std::string& x_var_name, const Double_t& min_x, const Double_t& max_x);
+  std::function<Double_t(Double_t* x, Double_t* p)> evaluate_normalized() const;
+  std::function<Double_t(Double_t* x, Double_t* p)> evaluate_floating() const;
+  std::string get_name() const { return "bukin"; };
+  UInt_t get_par_number() const { return 6; }
+  UInt_t get_par_number_normalized() const { return 5; }
+private:
+};
+
+
+Bukin::Bukin(const std::string& x_var_name, const Double_t& min_x, const Double_t& max_x) :
+  ModelFunction(x_var_name, min_x, max_x) {
+  parameters_.push_back(RooRealVar("Xp", "Xp", 10, 500));
+  parameters_.push_back(RooRealVar("sp", "sp", 1, 100));
+  parameters_.push_back(RooRealVar("rho1", "rho1", 0, 10));
+  parameters_.push_back(RooRealVar("rho2", "rho2", 0, 10));
+  parameters_.push_back(RooRealVar("xi", "xi", -0.99, 0.99));
+  pdf_ = new bukin("bukin", "bukin",
+                  x_, parameters_[0], parameters_[1], parameters_[2],
+                  parameters_[3], parameters_[4]);
+}
+
+std::function<Double_t(Double_t* x, Double_t* p)> Bukin::evaluate_normalized() const {
+  // fix this shit
+  return [&](double* x, double* p) {
+    return bkg_model_fit::bukin(x[0], p[0], p[1], p[2],
+                                p[3], p[4], p[5]);
+  };
 }
 
 
 
 
-void set_successful_parameters(const std::string model_name, std::vector<RooRealVar*>& params, const TFitResult* fit_result) {
-
-  if (model_name == "super_novosibirsk") {
-    params[0]->setVal(fit_result->GetParams()[0]);
-    params[1]->setVal(fit_result->GetParams()[1]);
-    params[2]->setVal(fit_result->GetParams()[3]);
-    params[3]->setVal(fit_result->GetParams()[4]);
-    params[4]->setVal(fit_result->GetParams()[5]);
-    params[5]->setVal(fit_result->GetParams()[6]);
-  } else if (model_name == "bukin") {
-    for (int i = 0; i < 5; i++) {
-      params[i]->setVal(fit_result->GetParams()[i+1]);
-    }
-  } else {
-    std::cerr << "Not implemented" << std::endl;
-  }
-
+std::function<Double_t(Double_t* x, Double_t* p)> Bukin::evaluate_floating() const {
+  return [&](double* x, double* p) {
+    return bkg_model_fit::bukin(x[0], p[0], p[1], p[2],
+                                p[3], p[4], p[5]);
+  };
 }
+
+
 
 void set_style_pave_fit_quality(TPaveText& pave, const Double_t& chi2,
                                 const UInt_t& ndof, const Double_t& pvalue) {
@@ -241,6 +281,34 @@ void print_result_table(std::ofstream& out_file, const TFitResult* result, const
 }
 
 
+// this can be improved a lot but for now it's like this.
+void fix_limits(std::string model_name, TF1& model) {
+  std::vector<UInt_t> indexes;
+  Int_t fix_index = 0;
+  if (model_name == "super_novosibirsk") {
+    indexes = {0, 1, 3, 4, 5, 6};
+    fix_index = 2;
+  } else if (model_name == "bukin") {
+    indexes = {1, 2, 3, 4, 5};
+    fix_index = 0;
+  } else {
+    std::cerr << "Not implemented, be careful" << std::endl;
+  }
+  for (auto it: indexes) {
+    Double_t param = model.GetParameter(it);
+    if (param > 0) {
+      model.SetParLimits(it, param*0.6, param*1.4);
+    } else {
+      model.SetParLimits(it, param*1.4, param*0.6);
+    }
+  }
+  if (fix_index != -1) {
+    Double_t param = model.GetParameter(fix_index);
+    model.SetParLimits(fix_index, param, param);
+  }
+}
+
+
 
 int main(int argc, char* argv[]) {
 
@@ -263,12 +331,18 @@ int main(int argc, char* argv[]) {
     ("full-hadronic", "Fits full hadronic channel instead of the leptonic")
     ("print-initial", "Prints the function with the initial parameters")
     ("use-integral", "Compute minimization using average integral of function instead of value in center of bin")
+    ("unbinned", " EXPERIMENTAL. Perform an unbinned fit instead of a binned one. Actually it's still not working.")
     ;
   bp::variables_map vm;
-  bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
+  try {
+    bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
+  } catch (const bp::error& e) {
+    cerr << e.what() << endl;
+    return -1;
+  }
 
   bool print = false, logy = false, mc = true, print_initial = false, full_hadronic = false;
-  bool use_integral = false, print_table = false;
+  bool use_integral = false, print_table = false, unbinned = false;
   string out_table_name;
   Float_t lumi = 0;
   if (vm.count("lumi")) {
@@ -300,49 +374,58 @@ int main(int argc, char* argv[]) {
     print_table = true;
     out_table_name = vm["output-table"].as<string>();
   }
+  if (vm.count("unbinned")) {
+    unbinned = true;
+    cerr << "You are using unbinned option but this it's still experimental and not " <<
+      " working properly. Use it at your own risk and danger." << endl;
+  }
 
   string model_name(vm["model"].as<string>());
   Float_t minx = vm["min-x"].as<Float_t>();
   Float_t maxx = vm["max-x"].as<Float_t>();
   UInt_t bins = vm["bins"].as<UInt_t>();
   string filename_pars = vm["initial-pars"].as<string>();
-
-  UInt_t npars = 0;
-  
-  
-  RooAbsPdf* pdf = nullptr;
-  vector<RooRealVar*> variables_to_delete;
-  RooRealVar Mass("Mass", "Mass", minx, maxx);
-
-  std::function<Double_t(Double_t* x, Double_t* p)> model = choose_model(model_name, Mass,
-                                                                         variables_to_delete,
-                                                                         pdf,
-                                                                         npars);
-    
-  TChain chain("output_tree");
-  
-  string filter_string;
-  if (full_hadronic) {
-    filter_string = "!Leptonic_event";
-  } else {
-    filter_string = "Leptonic_event";
-  }
   vector<string> input_files = vm["input"].as<vector<string>>();
   string output_file = vm["output"].as<string>();
   vector<string> print_file;
   if (print) {
     print_file = vm["print"].as<vector<string>>();
   }
-  // vector<Float_t> init_pars( {0.001, 1862, 240559, 43, 62, 1, -0.008} );
+  
+  
+  ModelFunction* function_class = nullptr;
+  if (model_name == "super_novosibirsk") {
+    function_class = new SuperNovosibirsk("Mass", minx, maxx);
+  } else if (model_name == "bukin") {
+    function_class = new Bukin("Mass", minx, maxx);
+  } else {
+    cerr << "No known model with this name. Aborting." << endl;
+    return -2;
+  }
+  std::function<Double_t(double* x, double*p)> model;
+  if (unbinned) {
+    model = function_class->evaluate_normalized();
+  } else {
+    model = function_class->evaluate_floating();
+  }
+  auto pdf = function_class->get_pdf();
+  UInt_t npars = function_class->get_par_number();
+  TChain chain("output_tree");  
+  string filter_string;
+  if (full_hadronic) {
+    filter_string = "!Leptonic_event";
+  } else {
+    filter_string = "Leptonic_event";
+  }
   vector<Float_t> init_pars;
-  std::ifstream infile(filename_pars.c_str());
   {
+    std::ifstream infile(filename_pars.c_str());
     Float_t appo;
     while (infile >> appo) {
       init_pars.push_back(appo);
     }
+    infile.close();
   }
-  infile.close();
   if (init_pars.size() != npars) {
     cerr << "The initial parameters given have not the right size." << endl;
     cerr << "I want this size: " << npars << " and i got " << init_pars.size() << endl;
@@ -356,7 +439,8 @@ int main(int argc, char* argv[]) {
     ss << std::fixed << std::setprecision(2) << binning;
     binnumber = ss.str();
   }
-  
+
+  // Style stuff
   HbbStylesNew style;
   style.SetStyle();
   setTDRStyle();
@@ -370,19 +454,19 @@ int main(int argc, char* argv[]) {
   pad_histo.cd();
   TLegend leg(0.58, 0.63, 0.98, 0.93);
   style.SetLegendStyle(&leg);    
-  
+
+  // Retrieve data from tree
   for (auto it: input_files) {
     chain.Add(it.c_str());
   }
   TF1 model_tf1("model_tf1", model, minx, maxx, npars);
   TH1F data_histo("data_histo", "data_histo", bins, minx, maxx);
-  style.InitHist(&data_histo, "M_{12} [GeV]", (string("Events / ") + binnumber + string(" GeV")).c_str());
-  data_histo.SetTitle("Background");
+  style.InitHist(&data_histo, "M_{12} [GeV]", (string("Events / ") +
+                                               binnumber + string(" GeV")).c_str());
   string limit_string = "(Mass > " + std::to_string(minx) + ") && (Mass < " + \
     std::to_string(maxx) + ")";
-  chain.Draw("Mass>>data_histo",
-             ("Weigth*(" + filter_string + string(" && ") + limit_string + ")").c_str(),
-             "E");
+  string selection = "Weigth*(" + filter_string + string(" && ") + limit_string + ")";
+  chain.Draw("Mass>>data_histo", selection.c_str(), "E");
 
   for (UInt_t i = 0; i < init_pars.size(); i++) {
     model_tf1.SetParameter(i, init_pars[i]);
@@ -396,10 +480,24 @@ int main(int argc, char* argv[]) {
   if (use_integral) {
     fit_options += string("I");
   }
-  TFitResultPtr fit_result = data_histo.Fit(&model_tf1, fit_options.c_str(), "", minx, maxx);
-  bool success = fit_result->IsValid();
+  TFitResultPtr fit_result;
+  if (unbinned) {
+    fit_result = data_histo.Fit(&model_tf1, fit_options.c_str(), "", minx, maxx);
+    // Why is not possible passing a TF1 instead of a stupid string?
+    // This solution is really bad but it's what these APIS permit.
+    fix_limits(model_name, model_tf1);
+    // fit_result = chain.UnbinnedFit("model_tf1",
+    //                                "Mass", selection.c_str(), fit_options.c_str());
+    chain.UnbinnedFit("model_tf1", "Mass", selection.c_str(), fit_options.c_str());
+  } else {
+    fit_result = data_histo.Fit(&model_tf1, fit_options.c_str(), "", minx, maxx);
+  }
+  // bool success = fit_result->IsValid();
+  {
+    TFitResult* appo = fit_result.Get();
+    function_class->pick_parameters(appo);
+  }
 
-  set_successful_parameters(model_name, variables_to_delete, fit_result.Get());
   if (print_table) {
     std::ofstream out_table_file(out_table_name.c_str());
     print_result_table(out_table_file, fit_result.Get(), npars, model_name);
@@ -441,17 +539,20 @@ int main(int argc, char* argv[]) {
   for (Int_t i = 1; i < data_histo.GetNbinsX(); i++) {
     Double_t x = data_histo.GetBinCenter(i);
     Double_t exp_value;
-    if (success) {
-      exp_value = model_tf1.Integral(x - binning/2, x + binning/2)/binning;
-    } else {
-      // exp_value = 1;
-      exp_value = model_tf1.Integral(x - binning/2, x + binning/2)/binning;
-    }
+    exp_value = model_tf1.Integral(x - binning/2, x + binning/2)/binning;
     Double_t divisor = TMath::Sqrt(exp_value);
+    if (divisor == 0) {
+      divisor = 1;
+    }
     Double_t y = (data_histo.GetBinContent(i) - exp_value)/divisor;
     
     dx[i - 1] = x;
     dy[i - 1] = y;
+    // Double_t R = 0.03; // sigmaF/F
+    // Double_t df = data_histo.GetBinCenter(i)/exp_value;
+    // df = df > 2 ? 2 : df;
+    // ddy[i - 1] = TMath::Sqrt(df + exp_value/4*TMath::Power(1 + df, 2)*R*R -
+    //                          (1 + df)*R*TMath::Sqrt(data_histo.GetBinCenter(i)));
     ddy[i - 1] = 1;
     ddx[i - 1] = binning / 2;
     chi2 += y*y;
@@ -487,11 +588,5 @@ int main(int argc, char* argv[]) {
     }
   }
 
-
-  for (auto it: variables_to_delete) {
-    delete it;
-    it = nullptr;
-  }
-  delete pdf;
   return 0;
 }
