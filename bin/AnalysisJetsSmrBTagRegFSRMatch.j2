@@ -1327,12 +1327,17 @@ void DataContainer::apply_fsr_correction() {
       cout << "Best candidate had pt: " << best->Pt() << " R distance: " \
            << appo.DeltaR(*best) << endl;
     }
-    Float_t minimum = leptonic ? pt_cut_lep[pt_cut_lep.size() - 1] : \
-      pt_cut_had[pt_cut_had.size() - 1];
-    if ((appo + *best).Pt() > minimum) {
-      appo += *best;
-      corrected_jet[i].SetPtEtaPhiM(appo.Pt(), appo.Eta(), appo.Phi(), appo.M());
-    }
+
+    // if (counter == 0) {
+    //   histo_soft_pt0->Fill(best->Pt());
+    //   histo_soft_DeltaR0->Fill(appo.DeltaR(*best));
+    // } else if (counter == 1) {
+    //   histo_soft_pt1->Fill(best->Pt());
+    //   histo_soft_DeltaR1->Fill(appo.DeltaR(*best));
+    // }
+    
+    appo += *best;
+    corrected_jet[i].SetPtEtaPhiM(appo.Pt(), appo.Eta(), appo.Phi(), appo.M());
   }
   return;
 }
