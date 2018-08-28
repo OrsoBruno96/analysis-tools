@@ -72,42 +72,42 @@ enum class Match {
 };
 
 
-const Float_t rcone(0.4);
-const unsigned int kLen = 100;
+constexpr Float_t rcone(0.4);
+constexpr unsigned int kLen = 100;
 constexpr bool use_tight_wp = false;
 constexpr Float_t deepcsv_cut_loose = 0.1522;
 constexpr Float_t deepcsv_cut_tight = 0.8001;
 constexpr Float_t deepcsv_cut_medium = 0.4941;
-const Float_t b_tagging_efficiency = 0.99;
-const Int_t kTight = 2;
-const array<Float_t, 3> pt_cut_had{ {100, 100, 40} };
-const array<Float_t, 3> pt_cut_lep{ {40, 40, 30} };
-const Float_t veto_fourth_jet_lep = 30;
-const Float_t veto_fourth_jet_chr = 40;
-const Float_t fsr_pt_cut = 20;
-const array<Float_t, 3> eta_cut{ {2.2, 2.2, 2.2} };
-const Float_t lepton_in_jet_pt_cut = 12;
-const bool debug = false;
-const bool corrections_after = true;
-const bool do_reranking = false;
-const bool apply_fourth_jet_veto = true;
+constexpr Float_t b_tagging_efficiency = 0.99;
+constexpr Int_t kTight = 2;
+constexpr array<Float_t, 3> pt_cut_had{ {100, 100, 40} };
+constexpr array<Float_t, 3> pt_cut_lep{ {40, 40, 30} };
+constexpr Float_t veto_fourth_jet_lep = 30;
+constexpr Float_t veto_fourth_jet_chr = 40;
+constexpr Float_t fsr_pt_cut = 20;
+constexpr array<Float_t, 3> eta_cut{ {2.2, 2.2, 2.2} };
+constexpr Float_t lepton_in_jet_pt_cut = 12;
+constexpr bool debug = false;
+constexpr bool corrections_after = true;
+constexpr bool do_reranking = false;
+constexpr bool apply_fourth_jet_veto = true;
 
-const CorrectionLevel correction_level = CorrectionLevel::{{ cl }};
-const bool apply_trigger_cut = {{ trig }};
-const Float_t soft_jet_distance = 0.8;
-const Int_t pdgBId = 5;
-const Int_t pdgCId = 4;
-const Int_t heavyHiggs = 36;
-const Float_t gen_part_deltarcut = 0.3;
-const Int_t kPuId = 4;
-const Int_t kTrigobj_jet_id = 1;
-const Float_t kTrigobj_pt_had = 100;
-const Float_t kTrigobj_pt_lep = 40;
-const Float_t kTrigobj_eta = 2.3;
-const Float_t kTrigobj_deltaRmin = 0.5;
-const Int_t kTrigobj_id_had_jet = 580;
-const Int_t kTrigobj_id_lep_jet = 530;
-const Int_t kTrigobj_filter_bits = 1;
+constexpr CorrectionLevel correction_level = CorrectionLevel::{{ cl }};
+constexpr bool apply_trigger_cut = {{ trig }};
+constexpr Float_t soft_jet_distance = 0.8;
+constexpr Int_t pdgBId = 5;
+constexpr Int_t pdgCId = 4;
+constexpr Int_t heavyHiggs = 36;
+constexpr Float_t gen_part_deltarcut = 0.3;
+constexpr Int_t kPuId = 4;
+constexpr Int_t kTrigobj_jet_id = 1;
+constexpr Float_t kTrigobj_pt_had = 100;
+constexpr Float_t kTrigobj_pt_lep = 40;
+constexpr Float_t kTrigobj_eta = 2.3;
+constexpr Float_t kTrigobj_deltaRmin = 0.5;
+constexpr Int_t kTrigobj_id_had_jet = 580;
+constexpr Int_t kTrigobj_id_lep_jet = 530;
+constexpr Int_t kTrigobj_filter_bits = 1;
 
 
 bool check_distance_enough(const TLorentzVector &a, const TLorentzVector &b) {
@@ -344,21 +344,14 @@ class DataContainer {
 /**
  * @brief Constructor that opens btag scalefactor file.
  */
-// DataContainer::DataContainer(TH1F* pt0, TH1F* pt1, TH1F* DR0, TH1F* DR1, TH1F* deltaR_530, TH1F* deltaR_580) :
 DataContainer::DataContainer() : 
   resolution("tables/Fall17_25nsV1_MC_PtResolution_AK4PFchs.txt"),
   resolution_sf("tables/Fall17_25nsV1_MC_SF_AK4PFchs.txt"),
   calib("deepcsv", "tables/DeepCSV_94XSF_V3_B_F.csv") {
-  // histo_soft_pt0(pt0),
-  // histo_soft_pt1(pt1),
-  // histo_soft_DeltaR0(DR0),
-  // histo_soft_DeltaR1(DR1),
-  // histo_deltaR530(deltaR_530),
-  // histo_deltaR580(deltaR_580) {
-  constexpr BTagEntry::OperatingPoint op = \
+  constexpr BTagEntry::OperatingPoint op =                      \
     use_tight_wp ? BTagEntry::OP_TIGHT : BTagEntry::OP_MEDIUM;
   reader = BTagCalibrationReader(&calib, op);
-  }
+}
 
 
 void DataContainer::sort_by_Pt() {
