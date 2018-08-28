@@ -310,6 +310,7 @@ class DataContainer {
   Float_t trig_obj_eta_[kLen];
   Float_t trig_obj_phi_[kLen];
   Float_t trig_obj_l1pt_[kLen];
+  Float_t trig_obj_l1pt_2_[kLen];
   Float_t trig_obj_l2pt_[kLen];
   Int_t trig_obj_filter_bits_[kLen];
   Float_t rho_jec_;
@@ -450,6 +451,7 @@ int DataContainer::SetTreeBranches(TTree * t) {
   t->SetBranchAddress("TrigObj_eta", trig_obj_eta_);
   t->SetBranchAddress("TrigObj_phi", trig_obj_phi_);
   t->SetBranchAddress("TrigObj_l1pt", trig_obj_l1pt_);
+  t->SetBranchAddress("TrigObj_l1pt_2", trig_obj_l1pt_2_);
   t->SetBranchAddress("TrigObj_l2pt", trig_obj_l2pt_);
   t->SetBranchAddress("fixedGridRhoFastjetAll", &rho_jec_);
   t->SetBranchAddress("TrigObj_filterBits", trig_obj_filter_bits_);
@@ -515,6 +517,7 @@ void DataContainer::CreateTree(TTree* t) {
   t->Branch("TrigObj_eta", trig_obj_eta_, "TrigObj_eta[nTrigObj]/F");
   t->Branch("TrigObj_phi", trig_obj_phi_, "TrigObj_phi[nTrigObj]/F");
   t->Branch("TrigObj_l1pt", trig_obj_l1pt_, "TrigObj_l1pt[nTrigObj]/F");
+  t->Branch("TrigObj_l1pt_2", trig_obj_l1pt_2_, "TrigObj_l1pt_2[nTrigObj]/F");
   t->Branch("TrigObj_l2pt", trig_obj_l2pt_, "TrigObj_l2pt[nTrigObj]/F");
   t->Branch("fixedGridRhoFastjetAll", &rho_jec_, "fixedGridRhoFastjetAll/F");
   t->Branch("TrigObj_filterBits", trig_obj_filter_bits_, "TrigObj_filterBits[nTrigObj]/I");
@@ -1191,7 +1194,7 @@ Int_t DataContainer::match_trigger_object(Bool_t leptonic, const Jet& jet) {
   if (debug) {
     cout << "Checking level 1 trigger" << endl;
   }
-  if (trig_obj_l1pt_[idx] < pt_cut) {
+  if (trig_obj_l1pt_[idx] < pt_cut && trig_obj_l1pt_2_[idx] < pt_cut) {
     if (debug) {
       cout << "L1 trig failed." << endl;
     }
