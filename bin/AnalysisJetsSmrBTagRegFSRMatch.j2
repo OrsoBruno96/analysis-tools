@@ -82,6 +82,7 @@ const array<Float_t, 3> pt_cut_had{ {100, 100, 40} };
 const array<Float_t, 3> pt_cut_lep{ {40, 40, 30} };
 const Float_t veto_fourth_jet_lep = 30;
 const Float_t veto_fourth_jet_chr = 40;
+const Float_t fsr_pt_cut = 20;
 const array<Float_t, 3> eta_cut{ {2.2, 2.2, 2.2} };
 const Float_t lepton_in_jet_pt_cut = 12;
 const bool debug = false;
@@ -1315,7 +1316,9 @@ void DataContainer::apply_fsr_correction() {
        softjets.begin(), softjets.end(), [&appo](const Jet& a, const Jet& b) {
          return appo.DeltaR(a) < appo.DeltaR(b);
        });
+    if (best == softjets.end()) { continue; }
     if (best != softjets.end() && best->DeltaR(appo) > soft_jet_distance) { continue; }
+    if (best->Pt() < fsr_pt_cut) { continue; }
     
     if (debug) {
       cout << "Correcting for fsr. Added something.\n" <<               \
