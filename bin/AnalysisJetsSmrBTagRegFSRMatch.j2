@@ -30,6 +30,8 @@
 #include <tuple>
 #include <cmath>
 
+#include <boost/program_options.hpp>
+
 #include "TTree.h"
 #include "TFile.h"
 #include "TH1.h"
@@ -1355,29 +1357,52 @@ void DataContainer::apply_fsr_correction() {
 }
 
 
-void get_chain_files(TChain* chain, int argc, char* argv[]) {
-  for (int i = 4; i < argc; i++) {
-    chain->Add(argv[i]);
-  }
-}
+
 
 
 int main(int argc, char* argv[]) {
-  TH1::SetDefaultSumw2();  // proper treatment of errors when scaling histograms
-  if (argc < 3) {
-    cerr << "\033[0;31mPlease give the name of the file where you want to" <<
-      "put the output as an argument. Aborting.\033[0m" << endl;
+  namespace bp = boost::program_options;
+  using std::string; using std::vector; using std::cerr; using std::endl; using std::cout;
+  
+  bp::options_description cmdline_options("Command line arguments");
+  cmdline_options.add_options()
+    ("help,h", "Produce help message")
+    ("output,o", bp::value<string>()->required(), "Output ROOT file. Ensure that this file does not exist.")
+    ("input,i", bp::value<vector<string>>()->required()->multitoken()->composing(), "Input root files")
+    ("min-x", bp::value<Float_t>()->default_value(0), "Minimum mass for the histo")
+    ("max-x", bp::value<Float_t>()->required(), "Maximum mass for the histo")
+    ("bins", bp::value<UInt_t>()->required(), "Number of bins for the mass histo")
+    ;
+  bp::variables_map vm;
+  try {
+    bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
+  } catch (bp::error& e) {
+    cerr << e.what() << endl;
     return -1;
   }
+
+  if (vm.count("help")) {
+    cout << cmdline_options << endl;
+    return 0;
+  }
+
+  Float_t highx = vm["max-x"].as<Float_t>();
+  Float_t lowx = vm["min-x"].as<Float_t>();
+  UInt_t bins = vm["bins"].as<UInt_t>();
+  
+  
+  TH1::SetDefaultSumw2();  // proper treatment of errors when scaling histograms
   TChain chain("Events");
-  get_chain_files(&chain, argc, argv);
+  for (auto it: vm["input"].as<vector<string>>()) {
+    chain.Add(it.c_str());
+  }
   if (chain.IsZombie()) {
     cerr << "Error opening input file! Aborting." << endl;
     return -2;
   }
-  TFile output(argv[1], "create");
+  TFile output(vm["output"].as<string>().c_str(), "create");
   if (output.IsZombie()) {
-    cerr << "Error opening output file " << argv[1] << ". Make sure that "
+    cerr << "Error opening output file " << vm["output"].as<string>() << ". Make sure that "
       "the file does not exist. Aborting." << endl;
     return -3;
   }
@@ -1385,29 +1410,27 @@ int main(int argc, char* argv[]) {
   DataContainer container;
   container.SetTreeBranches(&chain);
   container.CreateTree(&output_tree);
-  UInt_t bins = std::stoi(argv[2]);
-  UInt_t highx = std::stoi(argv[3]);
   {% if data %}
   TH1F mass_histo_chromo("mass_histo_chromo",                           \
-                         "Invariant mass of bb jets (NL)", bins, 0, highx);
+                         "Invariant mass of bb jets (NL)", bins, lowx, highx);
   TH1F mass_histo_lepton("mass_histo_lepton",                           \
-                         "Invariant mass of bb jets (L)", bins, 0, highx);
+                         "Invariant mass of bb jets (L)", bins, lowx, highx);
   std::vector<TH1F*> histos;
   histos.push_back(&mass_histo_chromo);
   histos.push_back(&mass_histo_lepton);
   {% else %}
   TH1F mass_histo_chromo_0_match("mass_histo_chromo_0_match", \
-                      "Invariant mass of bb jets", bins, 0, highx);
+                      "Invariant mass of bb jets", bins, lowx, highx);
   TH1F mass_histo_lepton_0_match("mass_histo_lepton_0_match", \
-                            "Invariant mass of bb jets", bins, 0, highx);
+                            "Invariant mass of bb jets", bins, lowx, highx);
   TH1F mass_histo_chromo_1_match("mass_histo_chromo_1_match",                           \
-                         "Invariant mass of bb jets", bins, 0, highx);
+                         "Invariant mass of bb jets", bins, lowx, highx);
   TH1F mass_histo_lepton_1_match("mass_histo_lepton_1_match",                           \
-                            "Invariant mass of bb jets", bins, 0, highx);
+                            "Invariant mass of bb jets", bins, lowx, highx);
   TH1F mass_histo_chromo_2_match("mass_histo_chromo_2_match",           \
-                                 "Invariant mass of bb jets", bins, 0, highx);
+                                 "Invariant mass of bb jets", bins, lowx, highx);
   TH1F mass_histo_lepton_2_match("mass_histo_lepton_2_match",           \
-                         "Invariant mass of bb jets", bins, 0, highx);
+                         "Invariant mass of bb jets", bins, lowx, highx);
   std::vector<TH1F*> histos;
   histos.push_back(&mass_histo_chromo_0_match);
   histos.push_back(&mass_histo_chromo_1_match);

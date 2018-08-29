@@ -16,6 +16,8 @@ DEVNULL = open(devnull, "wb")
 process_list = list()
 SPLITTING = 10
 
+specific_directory = "fourth_jet_veto/medium_wp"
+
 
 def fill_list(type_of, output_dir):
     bins = 100
@@ -38,8 +40,12 @@ def fill_list(type_of, output_dir):
                 print(tmp_output_file)
                 condor_submit(
                     process_list,
-                    executable,
-                    [tmp_output_file, str(bins), str(highx)] + veralista,
+                    "",
+                    [executable,
+                     "--output", tmp_output_file,
+                     "--bins", str(bins),
+                     "--max-x", str(highx),
+                     "--input", ] + veralista,
                     "_".join([executable, params["era"], str(i)]), 600, 1000)
     bash_filename = ojoin(tmp_dir, "run_condor" + type_of + ".sh")
     bash_file = open_and_create_dir(bash_filename)
@@ -52,13 +58,13 @@ def fill_list(type_of, output_dir):
     
     
 if sys.argv[1] == "bkg" and len(sys.argv) == 2:
-    output_dir = ojoin(base_out_dir, "raw_files/bkg/distribution_corrections_before_jets_3_FSR_pt_20_deltar_08/medium_wp")
+    output_dir = ojoin(base_dir, ojoin("raw_files/bkg", specific_directory))
     mkdir_p(output_dir)
     proc = Popen([fill_list("bkg", output_dir), ], stdout=PIPE)
     print(proc.stdout.read())
     proc.wait()
 elif sys.argv[1] == "bkg" and sys.argv[2] is not None and sys.argv[2] == "merge":
-    output_dir = ojoin(base_out_dir, "raw_files/bkg/distribution_corrections_before_jets_3_FSR_pt_20_deltar_08/medium_wp")
+    output_dir = ojoin(base_dir, ojoin("raw_files/bkg", specific_directory))
     for params in bkg_files:
         for cl in correction_level_bkg:
             output_file = "_".join([params['mass'], params['era'], cl[0], cl[1]])
@@ -73,7 +79,7 @@ elif sys.argv[1] == "bkg" and sys.argv[2] is not None and sys.argv[2] == "merge"
             # Here we do rm if all is ok
             
 elif sys.argv[1] == "mc":
-    output_dir = ojoin(base_out_dir, "raw_files/MC/distribution_corrections_before_jets_3_FSR_pt_20_deltar_08/medium_wp")
+    output_dir = ojoin(base_dir, ojoin("raw_files/MC", specific_directory))
     mkdir_p(output_dir)
     for params in mass_points_signal:
         for cl in correction_level_signal:
@@ -83,7 +89,11 @@ elif sys.argv[1] == "mc":
             veralista = [ojoin(params['basedir'], l) for l in params['filenames']]
             condor_submit(
                 process_list,
-                executable, [output_file, str(params['bins']), str(params['highx'])] + veralista,
+                "", [executable,
+                     "--output", output_file,
+                     "--bins", str(params['bins']),
+                     "--max-x", str(params['highx']),
+                     "--input", ] + veralista,
                 "_".join([params['mass'], cl[0], cl[1]]), 600, 1000)
     bash_filename = "_tmp/run_condor_mc.sh"
     bash_file = open(bash_filename, "w")
@@ -98,14 +108,14 @@ elif sys.argv[1] == "mc":
     proc.wait()
 
 elif sys.argv[1] == 'sig' and len(sys.argv) == 2:
-    output_dir = ojoin(base_out_dir, "raw_files/signal/distribution_corrections_before_jets_3_FSR_pt_20_deltar_08/medium_wp")
+    output_dir = ojoin(base_dir, ojoin("raw_files/signal", specific_directory))
     mkdir_p(output_dir)
     proc = Popen([fill_list("sig", output_dir), ], stdout=PIPE)
     print(proc.stdout.read())
     proc.wait()
     
 elif sys.argv[1] == "sig" and len(sys.argv) == 3 and sys.argv[2] == "merge":
-    output_dir = ojoin(base_out_dir, "raw_files/signal/distribution_corrections_before_jets_3_FSR_pt_20_deltar_08/medium_wp")
+    output_dir = ojoin(base_dir, ojoin("raw_files/signal", specific_directory))
     for params in bkg_files:
         for cl in correction_level_bkg:
             output_file = "_".join(["sig", params['era'], cl[0], cl[1]])
