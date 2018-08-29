@@ -4,7 +4,7 @@
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
     mass_points_signal, bkg_files, split_list, mkdir_p, condor_script_executable, \
-    tmp_dir, condor_submit, open_and_create_dir
+    tmp_dir, condor_submit, open_and_create_dir, base_dir
 from subprocess import Popen, STDOUT, PIPE
 from time import sleep
 from os.path import join as ojoin
@@ -14,7 +14,6 @@ import sys
 
 DEVNULL = open(devnull, "wb")
 process_list = list()
-base_out_dir = "/nfs/dust/cms/user/zorattif/output/"
 SPLITTING = 10
 
 
