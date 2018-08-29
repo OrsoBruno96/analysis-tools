@@ -21,6 +21,7 @@ era1 = ['F',]
 era2 = ['F',]
 highx = 800
 binx = 150
+lowx = 200
 fix_min_ratio = None
 fix_max_ratio = 2
 lumi = 35.6
