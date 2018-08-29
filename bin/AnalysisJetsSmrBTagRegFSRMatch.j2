@@ -999,22 +999,6 @@ void DataContainer::fill_histogram(TTree* tree, \
       n_kinematics_chr++;
     }
     
-    {% if not data %}
-    unsigned int matched = 0;
-    for (unsigned int i = 0; i < 2; i++) {
-      match_jet_with_part(bjets[i]);
-      if (debug) {
-        cout << "Jet matched as " << bjets[i].GetMatch() << endl;
-      }
-      if (bjets[i].GetMatch() == Match::higgsd) {
-        matched++;
-      }
-    }
-    if (debug) {
-      cout << "Matched as higgs daughter " << matched << " jets" << endl;
-    }
-    {% endif %}
-
     if (apply_trigger_cut) {
       Int_t appo1, appo2;
       appo1 = match_trigger_object(leptonic, bjets[0]);
@@ -1052,6 +1036,22 @@ void DataContainer::fill_histogram(TTree* tree, \
         }
       }
     }
+
+    {% if not data %}
+    unsigned int matched = 0;
+    for (unsigned int i = 0; i < 2; i++) {
+      match_jet_with_part(bjets[i]);
+      if (debug) {
+        cout << "Jet matched as " << bjets[i].GetMatch() << endl;
+      }
+      if (bjets[i].GetMatch() == Match::higgsd) {
+        matched++;
+      }
+    }
+    if (debug) {
+      cout << "Matched as higgs daughter " << matched << " jets" << endl;
+    }
+    {% endif %}
     
     {% if not data %}
     if (debug) {
