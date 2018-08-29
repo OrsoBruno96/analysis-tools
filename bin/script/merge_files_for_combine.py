@@ -9,7 +9,7 @@ from ROOT.RooFit import Import
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
     name_of_lep, open_and_create_dir, mkdir_p, get_signal_cl_from_bkg, tmp_dir, \
-    condor_submit, condor_script_executable, base_dir
+    condor_submit, condor_script_executable, base_dir, scripts_dir
 from os.path import join as ojoin
 from os import chmod
 
@@ -73,7 +73,7 @@ output_script_filedir = ojoin(tmp_dir, "script")
 list_of_datacards = list()
 roofit_file_list = list()
 normalization_command_list = list()
-template_loader = FileSystemLoader(searchpath='./combine/templates/')
+template_loader = FileSystemLoader(searchpath=ojoin(scripts_dir, 'combine/templates/'))
 template_env = Environment(loader=template_loader)
 if shape_bkg:
     template = template_env.get_template("datacard_shape.j2")

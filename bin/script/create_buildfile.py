@@ -3,12 +3,12 @@
 
 from jinja2 import FileSystemLoader, Environment
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
-    mass_points_signal, bkg_files
+    mass_points_signal, bkg_files, bin_dir
 
 
 mass_points = ["120", "350", "1200"]
 
-template_loader = FileSystemLoader(searchpath='./')
+template_loader = FileSystemLoader(searchpath=bin_dir)
 template_env = Environment(loader=template_loader)
 
 names = list()

@@ -4,14 +4,14 @@
 from jinja2 import FileSystemLoader, Environment
 
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
-    mass_points_signal, bkg_files, split_list
+    mass_points_signal, bkg_files, split_list, bin_dir
 
 import os
 import sys
 
 
 
-template_loader = FileSystemLoader(searchpath='./')
+template_loader = FileSystemLoader(searchpath=bin_dir)
 template_env = Environment(loader=template_loader)
 template = template_env.get_template("AnalysisJetsSmrBTagRegFSRMatch.j2")
 

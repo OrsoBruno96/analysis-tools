@@ -4,7 +4,7 @@
 from jinja2 import FileSystemLoader, Environment
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
     name_of_lep, open_and_create_dir, mass_points_signal, bkg_files, tmp_dir, base_dir, \
-    mkdir_p
+    mkdir_p, scripts_dir
 from ROOT import TFile, TChain, TH1F
 from os.path import join as ojoin
 from os import chmod
@@ -42,7 +42,7 @@ output_name = ojoin(output_dir, output_name)
 # Modify after this only if you know what are doing
 tmp_filename = "/nfs/dust/cms/user/zorattif/trash/tmp.root"
 templated_filename = ojoin(tmp_dir, "template/ratioplot.json")
-template_loader = FileSystemLoader(searchpath='./templates/')
+template_loader = FileSystemLoader(searchpath=ojoin(scripts_dir, 'templates/'))
 template_env = Environment(loader=template_loader)
 template = template_env.get_template("ratioplot.j2")
 

@@ -3,7 +3,7 @@
 
 from jinja2 import FileSystemLoader, Environment
 from settings_parallelization import correction_level_signal, name_of_lep, \
-    open_and_create_dir, mass_points_signal, base_dir, tmp_dir
+    open_and_create_dir, mass_points_signal, base_dir, tmp_dir, scripts_dir
 from os.path import join as ojoin
 from os import chmod
 from decimal import Decimal, getcontext
@@ -17,7 +17,7 @@ specific_directory = "fourth_jet_veto/medium_wp"
 script_filename = ojoin(tmp_dir, "script/plot_stack.sh")
 script_file = open_and_create_dir(script_filename)
 command_list = list()
-template_loader = FileSystemLoader(searchpath='./templates/')
+template_loader = FileSystemLoader(searchpath=ojoin(scripts_dir, 'templates/'))
 template_env = Environment(loader=template_loader)
 
 for mass in mass_points_signal:
