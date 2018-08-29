@@ -31,7 +31,7 @@ for c in ${CASES[@]} ; do
                     era="${name:0:1}"
                     corr=$(echo $name | cut -c 3-)
                     cd ${NEW_SCRIPT_DIR}
-                    cat $SCRIPT_FILENAME | grep $era | grep $corr | bash
+                    cat $SCRIPT_FILENAME | grep ${era}_ | grep $corr | bash
                     cd ${BASE_DIR}/${c}/${SPECIFIC_DIR}
                 fi
             done
