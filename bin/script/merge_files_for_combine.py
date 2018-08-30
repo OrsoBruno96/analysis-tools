@@ -11,6 +11,9 @@ from pylab import loadtxt
 from settings_parallelization import correction_level_bkg, correction_level_signal, \
     name_of_lep, open_and_create_dir, mkdir_p, get_signal_cl_from_bkg, tmp_dir, \
     condor_submit, condor_script_executable, base_dir, scripts_dir
+from fit_script import subranges as fit_bkg_details
+from fit_script import mass_points as fit_mc_details
+
 from os.path import join as ojoin
 from os import chmod
 
@@ -27,16 +30,16 @@ lumi = 35.6
 
 limits = {
     "120": {
-        "lep": (120, 600, 200),
-        "chr": (120, 600, 200),
+        "lep": [120, 600, 200],
+        "chr": [120, 600, 200],
     },
     "350": {
-        "lep": (120, 600, 200),
-        "chr": (120, 600, 200),
+        "lep": [120, 600, 200],
+        "chr": [120, 600, 200],
     },
     "1200": {
-        "lep": (120, 1200, 200),
-        "chr": (120, 1200, 200),
+        "lep": [120, 1200, 200],
+        "chr": [120, 1200, 200],
     }
 }
 
@@ -125,6 +128,15 @@ for mass in mass_points:
             appo_mc = TChain("output_tree")
             appo_sig = TChain("output_tree")
             limit = limits[mass][name_of_lep(l)]
+            if shape_bkg or shape_mc:
+                limit[0] = max(
+                    (item for item in fit_bkg_details[name_of_lep(l)]
+                     if item['name'] == correct_fit_bkg[name_of_lep(l)][mass][0]).next()['min'],
+                    fit_mc_details[name_of_lep(l)][mass]['min'])
+                limit[1] = min(
+                    (item for item in fit_bkg_details[name_of_lep(l)]
+                     if item['name'] == correct_fit_bkg[name_of_lep(l)][mass][0]).next()['max'],
+                    fit_mc_details[name_of_lep(l)][mass]['max'])
             limit_string = "(Mass > " + str(limit[0]) + \
                            ") && (Mass < " + str(limit[1]) + ")"
             if l:
@@ -151,7 +163,8 @@ for mass in mass_points:
             histo_mc.Scale(scale_factor_MC)
             appo_sig.Draw("Mass>>sig_bbb_Mbb", " && ".join([filter_string, limit_string]), "goff")
             bkg_events = histo_bkg.GetEntries()
-            mc_events = histo_mc.GetEntries()
+            # mc_events = histo_mc.GetEntries()
+            mc_events = histo_mc.Integral(0, limit[2] - 1)
             histo_bkg.Write()
             histo_mc.Write()
             histo_sig.Write()
