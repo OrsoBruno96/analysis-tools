@@ -52,9 +52,9 @@ ClassImp(bukin)
  { 
    const Double_t sqr2log2 = TMath::Sqrt(2*TMath::Log(2));
    const Double_t log2 = TMath::Log(2);
-   Double_t x1 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi + 1) - 1);
-   Double_t x2 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi + 1) + 1);
-
+   Double_t x1 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi*xi + 1) - 1);
+   Double_t x2 = Xp + sp*sqr2log2*(xi/TMath::Sqrt(xi*xi + 1) + 1);
+   
    Double_t interno = 0;
   
    if (x < x1) {
