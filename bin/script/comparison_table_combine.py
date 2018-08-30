@@ -11,8 +11,8 @@ from settings_parallelization import correction_level_bkg, correction_level_sign
 from fit_script import subranges, mass_points, eras
 from string_formatter import tex_format
 
-specific_directory = "fourth_jet_veto/tight_wp"
-shape = "template"
+specific_directory = "fourth_jet_veto/medium_wp"
+shape = "shape_all"
 combine_dir = ojoin(ojoin(base_dir, ojoin(ojoin("combine_tool", shape),
                                           specific_directory)), "out")
 
@@ -29,8 +29,11 @@ for l in lep:
         c = "_".join(c)
         corr_values[m][c] = list()
         input_file = ojoin(ojoin(combine_dir, name_of_lep(l)), c) + ".txt"
-        mass, sigma2m, sigma1m, media, sigma1p, sigma2p, obs = loadtxt(
-            input_file, unpack=True, skiprows=1)
+        try:
+            mass, sigma2m, sigma1m, media, sigma1p, sigma2p, obs = loadtxt(
+                input_file, unpack=True, skiprows=1)
+        except StopIteration:
+            continue
         appo = [mass, sigma2m, sigma1m, media, sigma1p, sigma2p, obs]
         appo = zip(*appo) # this should transpose the matrix
         for i in range(0, len(appo)):
