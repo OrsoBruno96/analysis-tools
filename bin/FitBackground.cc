@@ -157,6 +157,7 @@ public:
   std::function<Double_t(Double_t* x, Double_t* p)> evaluate_normalized() const;
   std::function<Double_t(Double_t* x, Double_t* p)> evaluate_floating() const;
   std::string get_name() const { return "super_novosibirsk"; };
+  void pick_parameters(const TFitResult* fit_result) override;
   UInt_t get_par_number() const { return 7; }
   UInt_t get_par_number_normalized() const { return 6; }
 private:
@@ -178,11 +179,20 @@ std::function<Double_t(Double_t* x, Double_t* p)> SuperNovosibirsk::evaluate_nor
   };
 }
 
+void SuperNovosibirsk::pick_parameters(const TFitResult* fit_result) {
+  parameters_[0].setVal(fit_result->Parameter(0));
+  parameters_[1].setVal(fit_result->Parameter(1));
+  parameters_[2].setVal(fit_result->Parameter(3));
+  parameters_[3].setVal(fit_result->Parameter(4));
+  parameters_[4].setVal(fit_result->Parameter(5));
+  parameters_[5].setVal(fit_result->Parameter(6));
+}
+
 
 SuperNovosibirsk::SuperNovosibirsk(const std::string& x_var_name, const Double_t& min_x, const Double_t& max_x) :
   ModelFunction(x_var_name, min_x, max_x) {
   parameters_.push_back(RooRealVar("p0", "p0", 0, 0.007));
-  parameters_.push_back(RooRealVar("p1", "p1", 1400, 2200));
+  parameters_.push_back(RooRealVar("p1", "p1", 1400, 3000));
   parameters_.push_back(RooRealVar("p3", "p3", 10, 100));
   parameters_.push_back(RooRealVar("p4", "p4", 10, 100));
   parameters_.push_back(RooRealVar("p5", "p5", 0, 10));
@@ -200,6 +210,7 @@ public:
   std::function<Double_t(Double_t* x, Double_t* p)> evaluate_normalized() const;
   std::function<Double_t(Double_t* x, Double_t* p)> evaluate_floating() const;
   std::string get_name() const { return "bukin"; };
+  void pick_parameters(const TFitResult*) override;
   UInt_t get_par_number() const { return 6; }
   UInt_t get_par_number_normalized() const { return 5; }
 private:
@@ -208,15 +219,22 @@ private:
 
 Bukin::Bukin(const std::string& x_var_name, const Double_t& min_x, const Double_t& max_x) :
   ModelFunction(x_var_name, min_x, max_x) {
-  parameters_.push_back(RooRealVar("Xp", "Xp", 10, 500));
-  parameters_.push_back(RooRealVar("sp", "sp", 1, 100));
-  parameters_.push_back(RooRealVar("rho1", "rho1", 0, 10));
-  parameters_.push_back(RooRealVar("rho2", "rho2", 0, 10));
+  parameters_.push_back(RooRealVar("Xp", "Xp", 10, 1500));
+  parameters_.push_back(RooRealVar("sp", "sp", 1, 200));
+  parameters_.push_back(RooRealVar("rho1", "rho1", -10, 10));
+  parameters_.push_back(RooRealVar("rho2", "rho2", -10, 10));
   parameters_.push_back(RooRealVar("xi", "xi", -0.99, 0.99));
   pdf_ = new bukin("bukin", "bukin",
                   x_, parameters_[0], parameters_[1], parameters_[2],
                   parameters_[3], parameters_[4]);
 }
+
+void Bukin::pick_parameters(const TFitResult* fit_result) {
+  for (UInt_t i = 0; i < get_par_number_normalized(); i++) {
+    parameters_[i].setVal(fit_result->Parameter(i+1));
+  }
+}
+
 
 std::function<Double_t(Double_t* x, Double_t* p)> Bukin::evaluate_normalized() const {
   // fix this shit
