@@ -64,13 +64,14 @@ for mass in mass_points_signal:
             out_dir = ojoin(ojoin(ojoin(base_dir, "plots/"), specific_directory), "stack")
             json_filename = ojoin(out_dir, outname + ".json")
             pdf_filename = ojoin(out_dir, outname + ".pdf")
+            png_filename = ojoin(out_dir, outname + ".png")
             f = open_and_create_dir(json_filename)
             f.write(out_text)
             f.close()
             command = [
                 "PlotStackStyle",
-                json_filename,
-                pdf_filename,
+                "--input", json_filename,
+                "--output", pdf_filename, png_filename
             ]
             command_list.append(" ".join(command))
             

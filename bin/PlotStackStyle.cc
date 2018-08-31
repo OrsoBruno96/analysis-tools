@@ -46,6 +46,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #pragma GCC diagnostic pop
+#include <boost/program_options.hpp>
 
 #include "TFile.h"
 #include "TH1.h"
@@ -160,24 +161,42 @@ void THStackBetter::Draw() {
 
 
 int main(int argc, char* argv[]) {
-  using std::cerr; using std::endl; using std::string;  
+  using std::cerr; using std::endl; using std::string; using std::vector; using std::cout;
+  namespace bp = boost::program_options;
+  bp::options_description cmdline_options("Command line arguments");
+  cmdline_options.add_options()
+    ("help,h", "Produce help message")
+    ("output,o", bp::value<vector<string>>()->multitoken()->required()->composing(), "Output print file. Can be more than one.")
+    ("input,i", bp::value<string>()->required(), "Input root files")
+    ;
+
+  bp::variables_map vm;
+  try {
+    bp::store(bp::parse_command_line(argc, argv, cmdline_options), vm);
+  } catch (bp::error& e) {
+    cerr << e.what() << endl;
+    return -1;
+  }
+  if (vm.count("help")) {
+    cout << cmdline_options << endl;
+    return 0;
+  }
+
   HbbStylesNew style;
   style.SetStyle();
   gStyle->SetOptStat(0);
   setTDRStyle();
-  if (argc != 3) {
-    cerr << "./PlotStackStyle input.json output.pdf" << endl;
-    return -1;
-  }
 
   TCanvas* c1 = style.MakeCanvas("c1", "", 700, 700);
-  THStackBetter stack(argv[1], true, lumi);
+  THStackBetter stack(vm["input"].as<string>().c_str(), true, lumi);
   stack.Draw();
   style.CMSPrelim(true, "MC", 0.15, 0.79);
   style.SetLegendStyle(stack.GetLegend());
   // style.CMSPrelim(Form("%.1f fb^{-1} (13 TeV)", lumi), "", 0.15, 0.78);
   c1->Update();
-  c1->Print(argv[2]);
+  for (auto it : vm["output"].as<vector<string>>()) {
+    c1->Print(it.c_str());
+  }
   delete c1;
   return 0;
 }
