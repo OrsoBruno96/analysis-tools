@@ -24,7 +24,7 @@ specific_directory = "fourth_jet_veto/medium_wp"
 
 lep = [False, True]
 eras = ["C", "D", "E", "F"]
-mass_points = ["120", "350", "1200"]
+mass_points = ["120", "350", "600", "1200"]
 
 lumi = 35.6
 
@@ -37,6 +37,10 @@ limits = {
         "lep": [120, 600, 200],
         "chr": [120, 600, 200],
     },
+    "600": {
+        "lep": [120, 1000, 200],
+        "chr": [120, 1000, 200],
+    },
     "1200": {
         "lep": [120, 1200, 200],
         "chr": [120, 1200, 200],
@@ -48,11 +52,13 @@ correct_fit_bkg = {
     "lep": {
         "120": ("first", "super_novosibirsk"),
         "350": ("first", "super_novosibirsk"),
+        "600": ("first", "super_novosibirsk"),
         "1200": ("third", "super_novosibirsk"),
     },
     "chr": {
         "120": ("first", "super_novosibirsk"),
         "350": ("first", "super_novosibirsk"),
+        "600": ("first", "super_novosibirsk"),
         "1200": ("third", "super_novosibirsk"),
     }
 }
@@ -62,11 +68,13 @@ correct_fit_mc = {
     "lep": {
         "120": "bukin",
         "350": "bukin",
+        "600": "bukin",
         "1200": "bukin",
     },
     "chr": {
         "120": "bukin",
         "350": "bukin",
+        "600": "bukin",
         "1200": "bukin",
     }
 }

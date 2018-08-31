@@ -17,7 +17,7 @@ combine_dir = ojoin(ojoin(base_dir, ojoin(ojoin("combine_tool", shape),
                                           specific_directory)), "out")
 
 lep = [True, False]
-mass_points = ["120", "350", "1200"]
+mass_points = ["120", "350", "600", "1200"]
 
 getcontext().prec = 0
 
