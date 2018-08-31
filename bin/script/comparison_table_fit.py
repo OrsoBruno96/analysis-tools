@@ -78,7 +78,8 @@ if __name__ == "__main__":
             out_file_latex = open_and_create_dir(out_filename_latex)
             for key, value in corr_values.iteritems():
                 out_file_latex.write(" & ".join(
-                    [key, ] + [tex_format(v) for v in value]
+                    ["{0:35} ".format(key), ] +
+                    ["{0:16} ".format(tex_format(v)) for v in value]
                 ))
                 out_file_latex.write(" \\\\\n")
             out_file_latex.close()
