@@ -1,0 +1,25 @@
+{
+    "histos": {
+        {% for shape in shapes %}
+        "{{ shape.name }}": {
+            "before": {
+                "root_file": "{{ shape.before.root_file }}",
+                "selection": "{{ shape.before.selection }}"
+            },
+            "after": {
+                "root_file": "{{ shape.after.root_file }}",
+                "selection": "{{ shape.after.selection }}"
+            },
+            "color": {{ shape.color }},
+            "bins": {{ shape.bins }}
+        }{% if not loop.last %},{% endif %}{% endfor %}
+    },
+    "title": "{{ title }}",
+    "x_axis": "{{ x_axis }}",
+    "y_axis": "{{ y_axis }}",
+    "normalizer": "{{ normalizer }}",
+    "minx": {{ minx }},
+    "maxx": {{ maxx }},
+    "legend_before": "{{ legend_before }}",
+    "legend_after": "{{ legend_after }}"
+}
