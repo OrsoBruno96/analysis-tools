@@ -137,7 +137,9 @@ THStackBetter::THStackBetter(const char* filename, const bool simulation, const 
     for (auto & colore : json.get_child("color")) {
       rgb.push_back(colore.second.get_value<int>());
     }
-    TColor* color = new TColor(TColor::GetFreeColorIndex(), rgb[0], rgb[1], rgb[2]) ;
+    TColor* color = new TColor(TColor::GetFreeColorIndex(),
+                               (Float_t) rgb[0]/255, (Float_t) rgb[1]/255,
+                               (Float_t) rgb[2]/255) ;
     TH1InStack* appo = new TH1InStack(json.get<string>("file_name"), \
                                       json.get<string>("name"), \
                                       json.get<string>("legend"), color);
