@@ -80,6 +80,7 @@ constexpr bool use_tight_wp = false;
 constexpr Float_t deepcsv_cut_loose = 0.1522;
 constexpr Float_t deepcsv_cut_tight = 0.8001;
 constexpr Float_t deepcsv_cut_medium = 0.4941;
+constexpr Float_t kQgl_cut = 0.5;
 constexpr Float_t b_tagging_efficiency = 0.99;
 constexpr Int_t kTight = 2;
 constexpr array<Float_t, 3> pt_cut_had{ {100, 100, 40} };
@@ -318,6 +319,7 @@ class DataContainer {
   Float_t trig_obj_l1pt_2_[kLen];
   Float_t trig_obj_l2pt_[kLen];
   Int_t trig_obj_filter_bits_[kLen];
+  Float_t jet_qgl_[kLen];
   Float_t rho_jec_;
   
   // Extra values to put in the new tree
@@ -464,6 +466,7 @@ int DataContainer::SetTreeBranches(TTree * t) {
   t->SetBranchAddress("TrigObj_l2pt", trig_obj_l2pt_);
   t->SetBranchAddress("fixedGridRhoFastjetAll", &rho_jec_);
   t->SetBranchAddress("TrigObj_filterBits", trig_obj_filter_bits_);
+  t->SetBranchAddress("Jet_qgl", jet_qgl_);
   return 0;
 }
 
@@ -530,7 +533,8 @@ void DataContainer::CreateTree(TTree* t) {
   t->Branch("TrigObj_l2pt", trig_obj_l2pt_, "TrigObj_l2pt[nTrigObj]/F");
   t->Branch("fixedGridRhoFastjetAll", &rho_jec_, "fixedGridRhoFastjetAll/F");
   t->Branch("TrigObj_filterBits", trig_obj_filter_bits_, "TrigObj_filterBits[nTrigObj]/I");
-
+  t->Branch("Jet_qgl", jet_qgl_, "Jet_qgl[nJets]/F");
+  
   // new data
   t->Branch("Mass", &mass_, "Mass/F");
   t->Branch("Jet_newPt", new_pt_, "Jet_newPt[nJet]/F");
@@ -846,7 +850,7 @@ void DataContainer::fill_histogram(TTree* tree, \
       if ((jet_puId_[it->Idx()] & kPuId) == 0) {
         continue;
       }
-
+      
       if (jet_n_electrons[it->Idx()] != 0) {
         if (debug) {
           cout << "There is an electron. Checking for pt cut" << \
@@ -1316,7 +1320,8 @@ void DataContainer::apply_fsr_correction() {
     constexpr Float_t high_cut = use_tight_wp ? deepcsv_cut_tight : deepcsv_cut_medium;
     if (btag_deep_[corrected_jet[i].Idx()] > high_cut) {
       bjets.push_back(std::make_tuple(corrected_jet[i], i));
-    } else {
+    } else if (btag_deep_[corrected_jet[i].Idx()] < deepcsv_cut_loose &&
+               jet_qgl_[corrected_jet[i].Idx()] < kQgl_cut) {
       softjets.push_back(corrected_jet[i]);
     }
   }
